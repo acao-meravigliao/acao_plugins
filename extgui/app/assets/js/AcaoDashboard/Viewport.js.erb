@@ -1,0 +1,89 @@
+/*
+ * Copyright (C) 2014-2014, Daniele Orlandi
+ *
+ * Author:: Daniele Orlandi <daniele@orlandi.com>
+ *
+ * License:: You can redistribute it and/or modify it under the terms of the LICENSE file.
+ *
+ */
+
+Ext.define('AcaoDashboard.Viewport', {
+  extend: 'Ext.container.Viewport',
+  requires: [
+    'Extgui.Card',
+    'Ext.toolbar.Toolbar',
+    'Ext.toolbar.TextItem',
+    'Ext.layout.container.Border',
+    'Ext.tree.Panel',
+    'AcaoDashboard.Radar',
+    'AcaoDashboard.Meteo',
+  ],
+  layout: 'border',
+  items: [
+   {
+    xtype: 'toolbar',
+    region: 'north',
+    height: 34,
+    ui: 'footer',
+    border: true,
+    items: [
+     {
+      xtype: 'component',
+      html: '<h1><%= Rails.application.config.extgui.page_title %></h1>',
+      cls: 'sevio_midgard_north-bar',
+     },
+      '->',
+//     {
+//      xtype: 'textfield',
+//      name: 'search',
+//      width: 400,
+//      emptyText: 'Global search...',
+//     },
+//      '->',
+    ],
+   },
+
+   {
+    xtype: 'toolbar',
+    region: 'west',
+    ui: 'footer',
+    width: 130,
+    vertical: true,
+    defaultType: 'button',
+    defaults: {
+      scale: 'large',
+      width: 110,
+    },
+    items: [
+     {
+      text: 'Radar',
+      name: 'radar',
+//      icon: '/assets/core/person_32x32.png',
+     },
+     {
+      text: 'Meteo',
+      name: 'meteo',
+//      icon: '/assets/core/person_32x32.png',
+     },
+     '->',
+     {
+      text: 'Logout',
+      name: 'logout',
+      icon: "<%= image_path 'extgui/exit.png' %>",
+     },
+    ]
+   },
+   {
+    xtype: 'container',
+    region: 'center',
+    name: 'mainpanel',
+    layout: 'fit',
+   },
+  ],
+
+  initComponent: function() {
+    var me = this;
+
+    me.callParent(arguments);
+  },
+});

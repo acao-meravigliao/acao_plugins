@@ -1,0 +1,478 @@
+/*
+ * Copyright (C) 2014-2014, Daniele Orlandi
+ *
+ * Author:: Daniele Orlandi <daniele@orlandi.com>
+ *
+ * License:: You can redistribute it and/or modify it under the terms of the LICENSE file.
+ *
+ */
+
+Ext.define('AcaoDashboard.Radar', {
+  extend: 'Ext.panel.Panel',
+  requires: [
+    'Ext.form.Panel',
+    'Extgui.AjaxJson',
+    'Extgui.gmaps.Map',
+    'Ext.grid.Panel',
+  ],
+
+  extrapolateEnable: true,
+  extrapolateDelay: 75,
+
+
+  border: false,
+  layout: 'border',
+  items: [
+   {
+    xtype: 'gmap',
+    region: 'center',
+    id: 'radar-map-canvas',
+    gmapType: 'SATELLITE',
+    mapConf: {
+      scrollWheel: true,
+      streetViewControl: false,
+      draggable: true,
+      panControl: false,
+    },
+    minAccuracy: 1000,
+    zoomLevel: 15,
+    center: {
+      lat: 45.812709,
+      lng: 8.763742,
+    },
+   },
+   {
+    xtype: 'panel',
+    region: 'east',
+    width: 350,
+    title: 'Log',
+    layout: 'fit',
+    collapsible: true,
+//    collapsed: false,
+    items: {
+      xtype: 'textarea',
+      name: 'logarea',
+    },
+   },
+   {
+    xtype: 'grid',
+    height: 170,
+    region: 'north',
+    title: 'Open Flights',
+    collapsible: true,
+    collapsed: true,
+    columns: [
+     {
+      text: 'Reg',
+     },
+    ],
+   },
+  ],
+
+  initComponent: function() {
+    var me = this;
+
+    me.callParent(arguments);
+
+    me.down('gmap').on('mapready', function() {
+      me.map = me.down('gmap').gmap;
+
+      Ext.Loader.loadScriptFile('<%=asset_path('markerwithlabel.js')%>',
+        function() { me.startRadar() },
+        function() { console.log("FAILURE"); }
+      );
+
+    });
+
+    me.logarea = me.down('[name=logarea]');
+  },
+
+  startRadar: function() {
+    var me = this;
+
+      me.circuitLayer = new google.maps.KmlLayer(window.location.origin + '/circuit.kml');
+      me.circuitLayer.setMap(me.map);
+
+    me.iw = new google.maps.InfoWindow({
+    });
+
+    me.traffics = {};
+    me.stations = {};
+
+    Extgui.app.faye.subscribe('/glideradar/processed/**', function(message) {
+      me.onMessage(message);
+    }, null, function() {
+      alert('Error subscribing to faye events');
+    });
+
+    me.periodicTask = Ext.util.TaskManager.start({
+      interval: 2000,
+      run: me.periodicCleanup,
+      scope: me,
+    });
+
+    me.setExtrapolateEnable(me.extrapolateEnable);
+
+//    Extgui.AjaxJson.request({
+//      url: '/acao/track',
+//      method: 'GET',
+//      params: {
+//        plane_id: 6449,
+//        from: '2015-06-03T11:42:04.000Z',
+//        to: '2015-06-03T11:59:04.000Z',
+//      },
+//      success: function(resp) {
+//        me.history = resp.responseJSON;
+//
+//        me.periodicTask = Ext.util.TaskManager.start({
+//          interval: 1000,
+//          run: me.playHistory,
+//          scope: me,
+//        });
+//      },
+//    });
+  },
+
+  playHistory: function() {
+    var me = this;
+
+    var tra = me.history.shift();
+console.log("A", tra);
+    if (tra)
+      me.onTrafficUpdate(tra.flarm_id, tra);
+  },
+
+  setExtrapolateEnable: function(enable) {
+    var me = this;
+
+    me.extrapolateEnable = enable;
+
+    if (me.extrapolateTask) {
+      clearInterval(me.extrapolateTask);
+      me.extrapolateTask = null;
+    }
+
+    if (enable) {
+      me.extrapolateTask = setInterval(function() { me.extrapolate() }, me.extrapolateDelay);
+    }
+  },
+
+  fix_types: {
+    0: 'Not available',
+    1: 'Not available',
+    2: '2D',
+    3: '3D'
+  },
+
+  onMessage: function(message) {
+    var me = this;
+
+    console.log("MSG=", message);
+
+    if (message.type != 'TRAFFICS_UPDATE') {
+      var newText = me.logarea.getValue() + Ext.Date.format(new Date(), 'H:m:s') + ' ' + (message.payload.text || message.type) + "\n";
+      var hasToScroll = me.logarea.inputEl.dom.scrollTop + me.logarea.inputEl.dom.clientHeight == me.logarea.inputEl.dom.scrollHeight;
+
+      me.logarea.setValue(newText);
+
+      if (hasToScroll)
+        me.logarea.inputEl.dom.scrollTop = 100000;
+
+      console.log("OMSG=", message);
+    }
+
+    switch(message.type) {
+    case 'TRAFFICS_UPDATE':
+      me.onTrafficsUpdate(message.payload);
+    break;
+    case 'TRAFFIC_NEW':
+      me.onTrafficNew(message.payload);
+    break;
+    }
+  },
+
+  onTrafficNew: function(message) {
+    var me = this;
+
+    var tra = me.findOrCreateTraffic(message.flarm_id);
+
+    tra.plane_info = message.plane_info;
+
+    me.updateTrafficLabel(tra);
+  },
+
+  onTrafficsUpdate: function(message) {
+    var me = this;
+
+    Ext.Object.each(message.stations, function(sta_id, sta) {
+      me.onStationUpdate(sta_id, sta);
+    });
+
+    Ext.Object.each(message.traffics, function(flarm_id, tra) {
+      me.onTrafficUpdate(flarm_id, tra);
+    });
+  },
+
+  onStationUpdate: function(sta_id, sta_data) {
+    var me = this;
+
+    var station = me.stations[sta_id];
+    if (!station) {
+      station = me.stations[sta_id] = {
+        station_id: sta_id,
+        data: {},
+      };
+    }
+
+    station.data = sta_data;
+    station.local_last_update = new Date;
+    station.online = true;
+
+    me.refreshStation(station);
+  },
+
+  findOrCreateTraffic: function(flarm_id) {
+    var me = this;
+
+    var tra = me.traffics[flarm_id];
+    if (!tra) {
+      tra = { flarm_id: flarm_id };
+
+      tra.marker = new MarkerWithLabel({
+        position: new google.maps.LatLng(0, 0),
+        labelContent: flarm_id || 'N/A',
+        labelClass: 'label',
+        map: me.map,
+        tra: tra,
+      });
+
+      google.maps.event.addListener(tra.marker, 'click', function (e, marker) {
+        me.iw.open(me.map, this);
+        me.iw.tra = this.tra;
+        me.updateTrafficIw(this.tra);
+      });
+
+      me.traffics[flarm_id] = tra;
+    }
+
+    return tra;
+  },
+
+  onTrafficUpdate: function(flarm_id, data) {
+    var me = this;
+
+    tra = me.findOrCreateTraffic(flarm_id);
+
+    if (!tra.plane_info && !tra.loading) {
+      tra.loading = true;
+
+      Extgui.AjaxJson.request({
+        url: '/ygg/acao/planes/by_code/' + flarm_id,
+        method: 'GET',
+        callback: function() {
+          tra.loading = false;
+        },
+        success: function(resp) {
+          this.plane_info = resp.responseJSON;
+          me.updateTrafficLabel(this);
+        },
+        scope: tra,
+      });
+    }
+
+    tra.local_last_update = new Date;
+
+    tra.prev_cog = tra.cog;
+    tra.prev_sog = tra.sog;
+
+    Ext.apply(tra, data);
+
+    tra.show_lat = tra.lat;
+    tra.show_lng = tra.lng;
+    tra.show_cog = tra.cog;
+
+    me.updateTrafficPosition(tra);
+
+    if (me.iw.tra == tra)
+      me.updateTrafficIw(tra);
+  },
+
+  periodicCleanup: function() {
+    var me = this;
+
+    var now = new Date;
+
+    Ext.Object.each(Ext.clone(me.stations), function(sta_id, sta) {
+      if (now - sta.local_last_update > 10000) {
+        sta.marker.setMap(null);
+        delete me.stations[sta_id];
+      }
+    });
+
+    Ext.Object.each(Ext.clone(me.traffics), function(flarm_id, tra) {
+      if (now - tra.local_last_update > 10000) {
+        tra.marker.setMap(null);
+        delete me.traffics[flarm_id];
+      }
+    });
+  },
+
+  adiff: function(a, b) {
+    var d = a - b;
+    return d < -180 ? d + 360 : (d > 180 ? d - 360 : d);
+  },
+
+  extrapolate: function() {
+    var me = this;
+
+    Ext.Object.each(me.traffics, function(flarm_id, tra) {
+      if (tra.sog < 10)
+        return;
+
+      var del = (new Date - tra.local_last_update) / 1000.0; // DeltaT in seconds
+      var spd = tra.sog + (tra.sog - tra.prev_sog) * del;
+      var tr = me.adiff(tra.cog, tra.prev_cog); // tra.tr
+
+      if (tr > 20) tr = 20;
+      if (tr < -20) tr = -20;
+
+      var cog = tra.cog + tr * del;
+      var cograd = (cog / 180) * Math.PI;
+
+      tra.show_lat = tra.lat + (Math.cos(cograd) * spd * del) / 111111;
+      tra.show_lng = tra.lng + (Math.sin(cograd) * spd * del) / (111111 * Math.cos((tra.lat / 180) * Math.PI));
+      tra.show_cog = cog;
+
+      me.updateTrafficPosition(tra);
+    });
+  },
+
+  types: {
+    0: { name: 'unknown', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
+    1: { name: 'Aliante', icon: 'M -5,0 5,0 M 0,-1 0,3 M -1,3 1,3 z', color: 'white' },
+    2: { name: 'Traino', icon: 'M -3,0 3,0 M 0,-0.5 0,2 M -1,2 1,2 M -0.5,-0.5 0.5,-0.5 z', color: 'orange' },
+    3: { name: 'Elicottero', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
+    4: { name: 'Paracadutista', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
+    5: { name: 'Aereo Paracadutisti', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
+    6: { name: 'Deltaplano', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
+    7: { name: 'Parapendio', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
+    8: { name: 'Aereo a motore', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
+    9: { name: 'Jet', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
+    10: { name: 'Disco volante', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
+    11: { name: 'Mongolfiera', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
+    12: { name: 'Dirigibile', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
+    13: { name: 'UAV', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
+    14: { name: 'unknown', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
+    15: { name: 'Oggetto', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
+  },
+
+  updateTrafficPosition: function(tra) {
+    var me = this;
+
+//console.log("O", tra.data);
+
+    tra.marker.setPosition(new google.maps.LatLng(tra.show_lat, tra.show_lng));
+
+    var opa = 1 - ((new Date - tra.local_last_update - 3000) / 10000);
+    if (opa > 1) opa = 1;
+    if (opa < 0) opa = 0;
+
+    tra.marker.setIcon({
+      path: me.getType(tra.type).icon,
+      fillColor:  me.getType(tra.type).color,
+      strokeColor:  me.getType(tra.type).color,
+      strokeWeight: 2,
+      scale: 5,
+      rotation: tra.show_cog || 0,
+      strokeOpacity: opa,
+    });
+  },
+
+  updateTrafficIw: function(tra) {
+    var me = this;
+
+    var txt = '';
+
+    if (tra.plane) {
+      txt +=
+        '<b>' +
+        tra.plane_info.type_name + ' ' + tra.plane_info.registration +
+        (tra.plane_info.race_registration ? (' (' + tra.plane_info.race_registration + ')') : '') +
+        '</b><br />';
+
+      txt +=
+        'Owner: ' + tra.plane_info.owner_name + '<br />';
+    } else {
+      txt += '<b>' + me.getType(tra.type).name + '</b><br />';
+    }
+
+    txt +=
+      'Height: ' + tra.alt.toFixed(0) + ' m<br />' +
+      'Speed: ' + (tra.sog * 3.6).toFixed(0) + ' km/h<br />' +
+      'V/S: ' + (tra.cr * 3.6).toFixed(1) + ' m/s<br />';
+
+    me.iw.setContent(txt);
+  },
+
+  getType: function(type) {
+    var me = this;
+    return me.types[type] ? me.types[type] : me.types[0];
+  },
+
+  updateTrafficLabel: function(tra) {
+    var me = this;
+
+    if (tra.plane_info)
+      tra.marker.set('labelContent', tra.plane_info.registration || tra.plane_info.flarm_id || '???');
+    else
+      tra.marker.set('labelContent', 'N/A');
+
+    tra.marker.label.setStyles();
+    tra.marker.label.draw();
+  },
+
+  refreshStation: function(station) {
+    var me = this;
+
+    var pos = new google.maps.LatLng(station.data.lat, station.data.lng);
+
+    if (!station.marker) {
+      station.marker = new google.maps.Marker({
+        position: pos,
+        title: station.station_id,
+        map: me.map,
+        icon: {
+          url: '<%=asset_path('antenna.png')%>',
+          anchor: new google.maps.Point(12, 32),
+        },
+      });
+
+      google.maps.event.addListener(station.marker, 'click', function (e) {
+        me.iw.open(me.map, this);
+        me.iw.tra = station;
+        me.updateStationIw(station);
+      });
+    }
+
+    station.marker.setPosition(pos);
+
+    if (me.iw.tra == station)
+      me.updateStationIw(station);
+  },
+
+  updateStationIw: function(station) {
+    var me = this;
+
+    me.iw.setContent(
+      'Station: ' + station.station_id + '<br />' +
+      'GPS fix type: ' + me.fix_types[station.data.gps_fix_type] + ' (' + station.data.gps_sats + ' sats)<br />' +
+      'GPS fix quality: ' + station.data.gps_fix_qual + '<br />' +
+      'GPS precision: ' + station.data.gps_pdop + '<br />' +
+      'Lat: ' + station.data.lat.toFixed(8) + '°<br />' +
+      'Lng: ' + station.data.lng.toFixed(8) + '°<br />' +
+      'Altitude: ' + station.data.alt + ' m<br />'
+    );
+  },
+
+});
+

@@ -1,0 +1,108 @@
+/*
+ * Copyright (C) 2012-2014, Daniele Orlandi
+ *
+ * Author:: Daniele Orlandi <daniele@orlandi.com>
+ *
+ * License:: You can redistribute it and/or modify it under the terms of the LICENSE file.
+ *
+ */
+
+Ext.define('AcaoDashboard.DashboardCard', {
+  extend: 'Ext.panel.Panel',
+  requires: [
+    'Extgui.Core.Task.Tree',
+  ],
+  layout: 'border',
+  title: 'DashBoard',
+
+  initComponent: function() {
+    var me = this;
+
+    var superuser = Extgui.app.hasGlobalCapa('superuser');
+
+    var buttons = [];
+    var widgets = [];
+
+//    if (superuser || Extgui.app.hasClassCapa('Ygg::Core::Taask', 'monitor')) {
+//      widgets.push(
+//       {
+//        xtype: 'core_task_tree',
+//        showAllTargets: true,
+//        expanded: false,
+//        flex: 1,
+//       }
+//      );
+//    }
+
+    buttons.push(
+     {
+      text: 'Radar',
+      name: 'radar',
+     }
+    );
+
+    buttons.push(
+     {
+      text: 'Meteo',
+      name: 'meteo',
+     }
+    );
+
+
+    me.items = [
+     {
+      xtype: 'container',
+      region: 'east',
+      flex: 1,
+      minWidth: 450,
+      maxWidth: 700,
+      layout: {
+        type: 'vbox',
+        align: 'stretch',
+      },
+      items: widgets,
+     },
+     {
+      xtype: 'container',
+      region: 'center',
+      layout: {
+        type: 'column',
+  //      columns: 4,
+  //      tableAttrs: {
+  //        style: {
+  //          width: '100%',
+  //          height: '100%',
+  //          'text-align': 'center'
+  //        }
+  //      }
+      },
+      defaultType: 'button',
+      defaults: {
+        margin: 15,
+        iconAlign: 'top',
+        width: 110,
+        height: 130, // TODO: Make button sizes adapt to viewport's size
+        cls: 'menubutton',
+      },
+      items: buttons,
+     },
+    ];
+
+    me.callParent(arguments);
+
+    if (me.down('button[name=radar]')) {
+      me.down('button[name=radar]').on('click', function() {
+        me.fireEvent('openuri', 'acao_dashboard/radar');
+      });
+    }
+
+    if (me.down('button[name=meteo]')) {
+      me.down('button[name=meteo]').on('click', function() {
+        me.fireEvent('openuri', 'acao_dashboard/meteo');
+      });
+    }
+
+
+  },
+});
+
