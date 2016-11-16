@@ -12,7 +12,7 @@ class PlanesController < Ygg::Hel::RestController
 
     @resource_relation ||= ar_model
     @resource_relation = ar_model.includes(ar_model.interfaces[:rest].eager_loading_hints(:view => ar_view)) if ar_model
-    @resource = @resource_relation.find_by_flarm_id!(params[:id])
+    @resource = @resource_relation.find_by!(flarm_code: params[:id])
 
     expires_in 1.hour, :public => true
     respond_with(@resource)

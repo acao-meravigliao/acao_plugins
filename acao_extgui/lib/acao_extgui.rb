@@ -15,6 +15,31 @@ class ExtguiEngine < Rails::Engine
 end
 
 class ExtguiPlugin < Ygg::Plugin
+  def extgui_menu_tree
+   lambda { {
+    meters: {
+      _node_: {
+        position: 20,
+        text: 'Meters',
+#        icon: image_path('ml/ml-16x16.png'),
+      },
+      meters: {
+        _node_: {
+          text: 'Meters',
+          uri: 'ygg/acao/meters/',
+#          icon: image_path('ml/addresses-16x16.png'),
+        }
+      },
+      meters_buses: {
+        _node_: {
+          text: 'Meters Buses',
+          uri: 'ygg/acao/meter_buses/',
+#          icon: image_path('ml/lists-16x16.png'),
+        }
+      },
+    },
+   } }
+  end
 end
 
 Ygg::Plugins.register(ExtguiPlugin)

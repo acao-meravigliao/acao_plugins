@@ -1,0 +1,73 @@
+/*
+ * Copyright (C) 2016-2016, Daniele Orlandi
+ *
+ * Author:: Daniele Orlandi <daniele@orlandi.com>
+ *
+ * License:: You can redistribute it and/or modify it under the terms of the LICENSE file.
+ *
+ */
+
+Ext.define('Extgui.Acao.Meter.ObjectPanel', {
+  extend: 'Extgui.object.panel.Base',
+  requires: [
+    'Extgui.Acao.Plugin',
+    'Extgui.Acao.Meter',
+    'Extgui.Core.Person.ReferenceField',
+    'Extgui.Acao.MeterBus.ReferenceField',
+  ],
+  extguiObject: 'Extgui.Acao.Meter',
+
+  destroyButton: true,
+  requestDeletionButton: false,
+  tabs: {
+    title: i18n('extgui.acao.meter.object_panel.object_tab'),
+    padding: 10,
+    layout: 'anchor',
+    items: [
+     {
+      xtype: 'textfield',
+      name: 'name',
+     },
+     {
+      xtype: 'textfield',
+      name: 'descr',
+     },
+     {
+      xtype: 'acao_meter_bus',
+      name: 'bus_id',
+     },
+     {
+      xtype: 'numberfield',
+      name: 'bus_address',
+     },
+     {
+      xtype: 'core_person',
+      name: 'person_id',
+     },
+//     {
+//      xtype: '',
+//      name: 'valid_from',
+//      acl: 'R',
+//     },
+//     {
+//      xtype: 'datefield',
+//      name: 'valid_to',
+//      acl: 'R',
+//     },
+//     {
+//      xtype: 'textarea',
+//      name: 'pem',
+//      height: 300,
+//      anchor: '100%',
+//      cls: 'ca_certificate_area',
+//      acl: { default: 'R', create: 'E' },
+//     },
+     {
+      xtype: 'textarea',
+      name: 'notes',
+      height: 120,
+      anchor: '100%',
+     },
+    ],
+  },
+});

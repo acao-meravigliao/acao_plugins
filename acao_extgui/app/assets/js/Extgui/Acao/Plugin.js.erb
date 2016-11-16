@@ -25,6 +25,10 @@ Ext.define('Extgui.Acao.Plugin', {
     me.control({
       'viewport > tabpanel > panel[klass=Extgui.Acao.Flight.IndexPanel] > panel > toolbar button[name=new]':
        { click: function(el, record) { me.openUri('ygg/acao/flights/new'); }, },
+      'viewport > tabpanel > panel[klass=Extgui.Acao.MeterBus.IndexPanel] > panel > toolbar button[name=new]':
+       { click: function(el, record) { me.openUri('ygg/acao/meter_bus/new'); }, },
+      'viewport > tabpanel > panel[klass=Extgui.Acao.Meter.IndexPanel] > panel > toolbar button[name=new]':
+       { click: function(el, record) { me.openUri('ygg/acao/meter/new'); }, },
     });
   },
 });

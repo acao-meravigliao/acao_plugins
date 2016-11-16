@@ -1,10 +1,10 @@
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'acao_models/version'
+require 'acao_maindb_models/version'
 
 Gem::Specification.new do |spec|
-  spec.name          = 'acao_models'
-  spec.version       = AcaoModels::VERSION
+  spec.name          = 'acao_maindb_models'
+  spec.version       = AcaoMaindbModels::VERSION
   spec.authors       = ['Daniele Orlandi']
   spec.email         = ['daniele@orlandi.com']
   spec.summary       = %q{ACAO models}
