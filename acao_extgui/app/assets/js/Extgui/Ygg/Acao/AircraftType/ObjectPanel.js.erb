@@ -1,0 +1,80 @@
+/*
+ * Copyright (C) 2008-2017, Daniele Orlandi
+ *
+ * Author:: Daniele Orlandi <daniele@orlandi.com>
+ *
+ * License:: You can redistribute it and/or modify it under the terms of the LICENSE file.
+ *
+ */
+
+Ext.define('Extgui.Ygg.Acao.AircraftType.ObjectPanel', {
+  extend: 'Extgui.object.panel.Base',
+  requires: [
+    'Extgui.Ygg.Acao.Plugin',
+    'Extgui.Ygg.Acao.AircraftType',
+    'Extgui.Ygg.Acao.AircraftType.ReferenceField',
+  ],
+  extguiObject: 'Extgui.Ygg.Acao.AircraftType',
+
+//  tabTitleTpl: '{local}@{domain.name}',
+//  panelTitleTpl: '<h1><span class="name">Acao AircraftType</span><span class="value">{local}@{domain.name}</span></h1>',
+
+  requestDeletionButton: true,
+
+  tabs: {
+    title: i18n('extgui.acao.aircraft_type.object_panel.object_tab'),
+    padding: 10,
+    layout: 'anchor',
+    items: [
+     {
+      xtype: 'textfield',
+      name: 'manufacturer',
+      allowBlank: false,
+     },
+     {
+      xtype: 'textfield',
+      name: 'name',
+      allowBlank: false,
+     },
+     {
+      xtype: 'numberfield',
+      name: 'seats',
+      minValue: 1,
+      maxValue: 3,
+     },
+     {
+      xtype: 'numberfield',
+      name: 'motor',
+      minValue: 0,
+      maxValue: 2,
+     },
+     {
+      xtype: 'numberfield',
+      name: 'handicap',
+      scale: 2,
+     },
+     {
+      xtype: 'numberfield',
+      name: 'club_handicap',
+      scale: 2,
+     },
+     {
+      xtype: 'textfield',
+      name: 'link_wp',
+      anchor: '100%',
+     },
+    ],
+  },
+
+  nav: [
+  ],
+
+  actions: [
+  ],
+
+//  initComponent: function() {
+//    var me = this;
+//
+//    me.callParent(arguments);
+//  },
+});

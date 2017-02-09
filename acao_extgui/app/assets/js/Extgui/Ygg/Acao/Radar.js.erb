@@ -1,0 +1,363 @@
+/*
+ * Copyright (C) 2014-2017, Daniele Orlandi
+ *
+ * Author:: Daniele Orlandi <daniele@orlandi.com>
+ *
+ * License:: You can redistribute it and/or modify it under the terms of the LICENSE file.
+ *
+ */
+
+Ext.define('Extgui.Ygg.Acao.Radar', {
+  requires: [
+    'Extgui.AjaxJson',
+  ],
+
+  fix_types: {
+    0: 'Not available',
+    1: 'Not available',
+    2: '2D',
+    3: '3D'
+  },
+
+  constructor: function(pars) {
+    var me = this;
+
+    me.ws = pars.ws;
+
+    me.map = new google.maps.Map(document.getElementById("map-canvas"), {
+      center: new google.maps.LatLng(45.812709,8.763742),
+      zoom: 16,
+      mapTypeId: google.maps.MapTypeId.SATELLITE,
+    });
+
+    me.circuitLayer = new google.maps.KmlLayer(window.location.origin + '/circuit.kml');
+    me.circuitLayer.setMap(me.map);
+
+  //  new google.maps.Marker({
+  //    position: new google.maps.LatLng(45.808025,8.772275),
+  //    title: 'Camera 1',
+  //    map: map
+  //  });
+
+    me.iw = new google.maps.InfoWindow({
+    });
+
+    me.traffics = {};
+    me.stations = {};
+
+    if (me.ws.state != 'READY') {
+      var sub = me.ws.on({
+        destroyable: true,
+        online: function(welcomeMsg) {
+          me.onOnline();
+          sub.destroy();
+        },
+      });
+    } else
+      me.onOnline();
+
+    setInterval(function() { me.periodicCleanup(); }, 2000);
+    setInterval(function() { me.extrapolate(); }, 75);
+  },
+
+  onOnline: function() {
+    var me = this;
+
+    me.ws.subscribe('ygg.glideradar.processed_traffic', {}, me.onMessage, me);
+  },
+
+  onMessage: function(message) {
+    var me = this;
+
+//    console.log("MSG=", message);
+
+    switch(message.headers.type) {
+    case 'TRAFFICS_UPDATE':
+      me.onTrafficsUpdate(message.payload);
+    break;
+    }
+  },
+
+  onTrafficsUpdate: function(message) {
+    var me = this;
+
+    Ext.Object.each(message.stations, function(sta_id, sta) {
+      me.onStationUpdate(sta_id, sta);
+    });
+
+    Ext.Object.each(message.traffics, function(flarm_id, tra) {
+      me.onTrafficUpdate(flarm_id, tra);
+    });
+  },
+
+  onStationUpdate: function(sta_id, sta_data) {
+    var me = this;
+
+    var station = me.stations[sta_id];
+    if (!station) {
+      station = me.stations[sta_id] = {
+        station_id: sta_id,
+        data: {},
+      };
+    }
+
+    station.data = sta_data;
+    station.local_last_update = new Date;
+    station.online = true;
+
+    me.refreshStation(station);
+  },
+
+  findOrCreateTraffic: function(flarm_id) {
+    var me = this;
+
+    var tra = me.traffics[flarm_id];
+    if (!tra) {
+      tra = { flarm_id: flarm_id };
+
+      tra.marker = new MarkerWithLabel({
+        position: new google.maps.LatLng(0, 0),
+        labelContent: flarm_id || 'N/A',
+        labelClass: 'label',
+        map: me.map,
+        tra: tra,
+      });
+
+      google.maps.event.addListener(tra.marker, 'click', function (e, marker) {
+        me.iw.open(me.map, this);
+        me.iw.tra = this.tra;
+        me.updateTrafficIw(this.tra);
+      });
+
+      me.traffics[flarm_id] = tra;
+    }
+
+    return tra;
+  },
+
+  onTrafficNew: function(message) {
+    var me = this;
+
+    var tra = me.findOrCreateTraffic(message.flarm_id);
+
+    tra.aircraft_info = message.aircraft_info;
+
+    me.updateTrafficLabel(tra);
+  },
+
+  onTrafficUpdate: function(flarm_id, data) {
+    var me = this;
+
+    tra = me.findOrCreateTraffic(flarm_id);
+
+    if (!tra.aircraft_info && !tra.loading && !tra.loadFailure) {
+      tra.loading = true;
+
+      Extgui.AjaxJson.request({
+        url: '/ygg/acao/aircrafts/by_code/' + tra.flarm_id,
+        method: 'GET',
+        callback: function() {
+          tra.loading = false;
+        },
+        success: function(resp) {
+          tra.aircraft_info = resp.responseJSON;
+          me.updateTrafficLabel(tra);
+        },
+        failure: function() {
+          tra.loadFailure = true;
+        },
+      });
+    }
+
+    tra.local_last_update = new Date;
+
+    tra.prev_cog = tra.cog;
+    tra.prev_sog = tra.sog;
+
+    Ext.apply(tra, data);
+
+    tra.show_lat = tra.lat;
+    tra.show_lng = tra.lng;
+    tra.show_cog = tra.cog;
+
+    me.updateTrafficPosition(tra);
+
+    if (me.iw.tra == tra)
+      me.updateTrafficIw(tra);
+  },
+
+  periodicCleanup: function() {
+    var me = this;
+
+    var now = new Date;
+
+    Ext.Object.each(Ext.clone(me.stations), function(sta_id, sta) {
+      if (now - sta.local_last_update > 10000) {
+        sta.marker.setMap(null);
+        delete me.stations[sta_id];
+      }
+    });
+
+    Ext.Object.each(Ext.clone(me.traffics), function(flarm_id, tra) {
+      if (now - tra.local_last_update > 10000) {
+        tra.marker.setMap(null);
+        delete me.traffics[flarm_id];
+      }
+    });
+  },
+
+  adiff: function(a, b) {
+    var d = a - b;
+    return d < -180 ? d + 360 : (d > 180 ? d - 360 : d);
+  },
+
+  extrapolate: function() {
+    var me = this;
+
+    Ext.Object.each(me.traffics, function(flarm_id, tra) {
+      if (tra.sog < 10)
+        return;
+
+      var del = (new Date - tra.local_last_update) / 1000.0; // DeltaT in seconds
+      var spd = tra.sog + (tra.sog - tra.prev_sog) * del;
+      var tr = me.adiff(tra.cog, tra.prev_cog); // tra.tr
+
+      if (tr > 20) tr = 20;
+      if (tr < -20) tr = -20;
+
+      var cog = tra.cog + tr * del;
+      var cograd = (cog / 180) * Math.PI;
+
+      tra.show_lat = tra.lat + (Math.cos(cograd) * spd * del) / 111111;
+      tra.show_lng = tra.lng + (Math.sin(cograd) * spd * del) / (111111 * Math.cos((tra.lat / 180) * Math.PI));
+      tra.show_cog = cog;
+
+      me.updateTrafficPosition(tra);
+    });
+  },
+
+  types: {
+    0: { name: 'unknown', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
+    1: { name: 'Aliante', icon: 'M -5,0 5,0 M 0,-1 0,3 M -1,3 1,3 z', color: 'white' },
+    2: { name: 'Traino', icon: 'M -3,0 3,0 M 0,-0.5 0,2 M -1,2 1,2 M -0.5,-0.5 0.5,-0.5 z', color: 'orange' },
+    3: { name: 'Elicottero', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
+    4: { name: 'Paracadutista', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
+    5: { name: 'Aereo Paracadutisti', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
+    6: { name: 'Deltaplano', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
+    7: { name: 'Parapendio', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
+    8: { name: 'Aereo a motore', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
+    9: { name: 'Jet', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
+    10: { name: 'Disco volante', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
+    11: { name: 'Mongolfiera', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
+    12: { name: 'Dirigibile', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
+    13: { name: 'UAV', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
+    14: { name: 'unknown', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
+    15: { name: 'Oggetto', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
+  },
+
+  updateTrafficPosition: function(tra) {
+    var me = this;
+
+    tra.marker.setPosition(new google.maps.LatLng(tra.show_lat, tra.show_lng));
+
+    var opa = 1 - ((new Date - tra.local_last_update - 3000) / 10000);
+    if (opa > 1) opa = 1;
+    if (opa < 0) opa = 0;
+
+    tra.marker.setIcon({
+      path: me.getType(tra.type).icon,
+      fillColor:  me.getType(tra.type).color,
+      strokeColor:  me.getType(tra.type).color,
+      strokeWeight: 2,
+      scale: 5,
+      rotation: tra.show_cog || 0,
+      strokeOpacity: opa,
+    });
+  },
+
+  updateTrafficIw: function(tra) {
+    var me = this;
+
+    var txt = '';
+
+    if (tra.aircraft) {
+      txt +=
+        '<b>' +
+        tra.aircraft.type_name + ' ' + tra.aircraft.registration +
+        (tra.aircraft.race_registration ? (' (' + tra.aircraft.race_registration + ')') : '') +
+        '</b><br />';
+
+      txt +=
+        'Owner: ' + tra.aircraft.owner_name + '<br />';
+    } else {
+      txt += '<b>' + me.getType(tra.type).name + '</b><br />';
+    }
+
+    txt +=
+      'Height: ' + tra.alt.toFixed(0) + ' m<br />' +
+      'Speed: ' + (tra.sog * 3.6).toFixed(0) + ' km/h<br />' +
+      'V/S: ' + (tra.cr * 3.6).toFixed(1) + ' m/s<br />';
+
+    me.iw.setContent(txt);
+  },
+
+  getType: function(type) {
+    var me = this;
+    return me.types[type] ? me.types[type] : me.types[0];
+  },
+
+  updateTrafficLabel: function(tra) {
+    var me = this;
+
+    if (tra.aircraft_info)
+      tra.marker.set('labelContent', tra.aircraft_info.registration || tra.aircraft_info.flarm_id);
+    else
+      tra.marker.set('labelContent', 'N/A');
+
+    tra.marker.label.setStyles();
+    tra.marker.label.draw();
+  },
+
+  refreshStation: function(station) {
+    var me = this;
+
+    var pos = new google.maps.LatLng(station.data.lat, station.data.lng);
+
+    if (!station.marker) {
+      station.marker = new google.maps.Marker({
+        position: pos,
+        title: station.station_id,
+        map: me.map,
+        icon: {
+          url: '<%=asset_path('antenna.png')%>',
+          anchor: new google.maps.Point(12, 32),
+        },
+      });
+
+      google.maps.event.addListener(station.marker, 'click', function (e) {
+        me.iw.open(me.map, this);
+        me.iw.tra = station;
+        me.updateStationIw(station);
+      });
+    }
+
+    station.marker.setPosition(pos);
+
+    if (me.iw.tra == station)
+      me.updateStationIw(station);
+  },
+
+  updateStationIw: function(station) {
+    var me = this;
+
+    me.iw.setContent(
+      'Station: ' + station.station_id + '<br />' +
+      'GPS fix type: ' + me.fix_types[station.data.gps_fix_type] + ' (' + station.data.gps_sats + ' sats)<br />' +
+      'GPS fix quality: ' + station.data.gps_fix_qual + '<br />' +
+      'GPS precision: ' + station.data.gps_pdop + '<br />' +
+      'Lat: ' + station.data.lat.toFixed(8) + '°<br />' +
+      'Lng: ' + station.data.lng.toFixed(8) + '°<br />' +
+      'Altitude: ' + station.data.alt + ' m<br />'
+    );
+  },
+});

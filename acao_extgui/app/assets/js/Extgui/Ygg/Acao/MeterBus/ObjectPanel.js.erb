@@ -1,0 +1,39 @@
+/*
+ * Copyright (C) 2016-2017, Daniele Orlandi
+ *
+ * Author:: Daniele Orlandi <daniele@orlandi.com>
+ *
+ * License:: You can redistribute it and/or modify it under the terms of the LICENSE file.
+ *
+ */
+
+Ext.define('Extgui.Ygg.Acao.MeterBus.ObjectPanel', {
+  extend: 'Extgui.object.panel.Base',
+  requires: [
+    'Extgui.Ygg.Acao.Plugin',
+    'Extgui.Ygg.Acao.MeterBus',
+  ],
+  extguiObject: 'Extgui.Ygg.Acao.MeterBus',
+
+  destroyButton: true,
+  requestDeletionButton: false,
+  tabs: {
+    title: i18n('extgui.acao.meter_bus.object_panel.object_tab'),
+    padding: 10,
+    layout: 'anchor',
+    items: [
+     {
+      xtype: 'textfield',
+      name: 'name',
+     },
+     {
+      xtype: 'textfield',
+      name: 'ipv4_address',
+     },
+     {
+      xtype: 'numberfield',
+      name: 'port',
+     },
+    ],
+  },
+});

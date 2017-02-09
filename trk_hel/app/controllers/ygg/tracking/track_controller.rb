@@ -10,24 +10,24 @@
 module Ygg
 module Tracking
 
-class TrackController < ApplicationController
+class TrackController < ActionController::Base
 
   layout false
 
   def index
     day = Time.local(params[:year], params[:month], params[:day])
 
-    @planes = TrackEntry.select(:plane_id).where(at: day.beginning_of_day..day.end_of_day).group(:plane_id).joins(:plane)
+    @aircrafts = TrackEntry.select(:aircraft_id).where(at: day.beginning_of_day..day.end_of_day).group(:aircraft_id).joins(:aircraft)
 
     respond_to do |format|
-      format.json { render :json => @planes.map { |x| { plane_id: x.plane_id, reg: x.plane.registration } } }
+      format.json { render :json => @aircrafts.map { |x| { aircraft_id: x.aircraft_id, reg: x.aircraft.registration } } }
     end
   end
 
   def track
     day = Time.local(params[:year], params[:month], params[:day])
 
-    entries = TrackEntry.where(at: day.beginning_of_day..day.end_of_day, plane_id: params[:plane_id]).order(at: :asc)
+    entries = TrackEntry.where(at: day.beginning_of_day..day.end_of_day, aircraft_id: params[:aircraft_id]).order(at: :asc)
 
     # TODO read and stream records to output without buffering
 
@@ -55,7 +55,7 @@ class TrackController < ApplicationController
     rel = TrackEntry.all
     rel = rel.where(rel.arel_table[:at].gt(params[:from])) if params[:from]
     rel = rel.where(rel.arel_table[:at].lt(params[:to])) if params[:to]
-    rel = rel.where(plane_id: params[:plane_id]) if params[:plane_id]
+    rel = rel.where(aircraft_id: params[:aircraft_id]) if params[:aircraft_id]
     rel = rel.order(at: :asc)
 
     respond_to do |format|
@@ -71,23 +71,23 @@ class TrackController < ApplicationController
     }.map { |k,v| "{#{k.to_s}}#{v}{/#{k.to_s}}" }.join('')
   end
 
-  def sw_get_planes_by_day
+  def sw_get_aircrafts_by_day
     pbd = {}
 
-    Ygg::Tracking::DayPlane.order(day: :asc).order(plane_id: :asc).each do |planeday|
-      pbd[planeday.day] ||= []
-      pbd[planeday.day] << planeday.plane_id
+    Ygg::Tracking::DayAircraft.order(day: :asc).order(aircraft_id: :asc).each do |aircraftday|
+      pbd[aircraftday.day] ||= []
+      pbd[aircraftday.day] << aircraftday.aircraft_id
     end
 
     render :json => pbd
   end
 
-  def sw_get_plane
+  def sw_get_aircraft
     pbd = {}
 
-    plane = Ygg::Acao::Plane.find(params[:id])
+    aircraft = Ygg::Acao::Aircraft.find(params[:id])
 
-    render :json => plane.ar_serializable_hash(:rest)
+    render :json => aircraft.ar_serializable_hash(:rest)
   end
 
   def sw_getactivecontests
@@ -133,12 +133,12 @@ class TrackController < ApplicationController
     starttime = Time.parse(params[:starttime] + '+0000')
     endtime = Time.parse(params[:endtime] + '+0000')
 
-    entries = TrackEntry.where(at: starttime..endtime, plane_id: params[:trackerid]).order(at: :asc)
+    entries = TrackEntry.where(at: starttime..endtime, aircraft_id: params[:trackerid]).order(at: :asc)
 
     out = "{datadelay}0{/datadelay}\n"
 
     entries.each do |entry|
-      out << "#{entry.plane_id},#{entry.at.getutc.strftime('%Y%m%d%H%M%S')},#{entry.lat},#{entry.lng},#{'%.1f' % entry.alt},1\n"
+      out << "#{entry.aircraft_id},#{entry.at.getutc.strftime('%Y%m%d%H%M%S')},#{entry.lat},#{entry.lng},#{'%.1f' % entry.alt},1\n"
     end
 
     render :plain => out, :content_type => 'text/plain'

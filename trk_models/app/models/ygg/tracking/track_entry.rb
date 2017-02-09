@@ -13,8 +13,8 @@ module Tracking
 class TrackEntry < ActiveRecord::Base
   self.table_name = 'trk_track_entries'
 
-  belongs_to :plane,
-             :class_name => 'Ygg::Acao::Plane'
+  belongs_to :aircraft,
+             :class_name => 'Ygg::Acao::Aircraft'
 end
 
 end

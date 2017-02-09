@@ -1,0 +1,63 @@
+/*
+ * Copyright (C) 2013-2017, Daniele Orlandi
+ *
+ * Author:: Daniele Orlandi <daniele@orlandi.com>
+ *
+ * License:: You can redistribute it and/or modify it under the terms of the LICENSE file.
+ *
+ */
+
+Ext.define('Extgui.Ygg.Acao.TimetableEntry.ObjectPanel', {
+  extend: 'Extgui.object.panel.Base',
+  requires: [
+    'Extgui.Ygg.Acao.Plugin',
+    'Extgui.Ygg.Acao.TimetableEntry',
+    'Extgui.Ygg.Acao.Aircraft.ReferenceField',
+  ],
+
+//  title: 'TimetableEntry...',
+  extguiObject: 'Extgui.Ygg.Acao.TimetableEntry',
+//  imageSrc: '<%= image_path 'email/timetable_entry_64x64.png' %>',
+//  tabTitleTpl: '{registration}',
+//  panelTitleTpl: '<div class="name">TimetableEntry</div><div class="value">{registration}</div>',
+  modifyButton: false,
+  destroyButton: false,
+  logPanel: false,
+  notificationsPanel: false,
+
+  tabs: [
+   {
+    xtype: 'panel',
+    title: i18n('extgui.ygg.acao.timetable_entry.object_panel.object_tab'),
+    padding: 10,
+    layout: 'anchor',
+    items: [
+     {
+      xtype: 'acao_aircraft',
+      name: 'aircraft_id',
+     },
+     {
+      xtype: 'combobox',
+      name: 'type',
+      width: 370,
+      queryMode: 'local',
+      editable: false,
+      value: null,
+      store: [
+       [ 'FLARM', 'FLARM' ],
+      ],
+     },
+     {
+      xtype: 'textfield',
+      name: 'identifier',
+     },
+    ],
+   },
+  ],
+
+
+  nav: [
+  ],
+
+  reports: [],
+});

@@ -1,0 +1,21 @@
+/*
+ * Copyright (C) 2016-2017, Daniele Orlandi
+ *
+ * Author:: Daniele Orlandi <daniele@orlandi.com>
+ *
+ * License:: You can redistribute it and/or modify it under the terms of the LICENSE file.
+ *
+ */
+
+Ext.define('Extgui.Ygg.Acao.Pilot', {
+  extend: 'Extgui.object.Base',
+  requires: [
+    'Extgui.Ygg.Acao.Plugin',
+    'Ygg.Acao.Pilot',
+  ],
+  singleton: true,
+
+  subTpl: [
+    '<span class="name">{person.first_name person.last_name}</span><br />{type_name}',
+  ],
+});

@@ -1,0 +1,79 @@
+/*
+ * Copyright (C) 2013-2017, Daniele Orlandi
+ *
+ * Author:: Daniele Orlandi <daniele@orlandi.com>
+ *
+ * License:: You can redistribute it and/or modify it under the terms of the LICENSE file.
+ *
+ */
+
+Ext.define('Extgui.Ygg.Acao.Flight.ObjectPanel', {
+  extend: 'Extgui.object.panel.Base',
+  requires: [
+    'Extgui.Ygg.Acao.Plugin',
+    'Extgui.form.field.DecimalNumber',
+    'Extgui.form.field.DateTime',
+    'Extgui.Ygg.Acao.Flight',
+    'Extgui.Ygg.Acao.Aircraft',
+    'Ygg.Core.Person',
+    'Extgui.Ygg.Core.Person.ReferenceField',
+    'Extgui.Ygg.Acao.Aircraft.ReferenceField',
+  ],
+
+  extguiObject: 'Extgui.Ygg.Acao.Flight',
+
+  tabs: [
+   {
+    xtype: 'panel',
+    title: i18n('extgui.ygg.acao.flight.object_panel.object_tab'),
+    padding: 10,
+    layout: 'anchor',
+    items: [
+     {
+      xtype: 'core_person',
+      name: 'pilot1_id',
+     },
+     {
+      xtype: 'core_person',
+      name: 'pilot2_id',
+     },
+     {
+      xtype: 'textfield',
+      name: 'pilot1_role',
+     },
+     {
+      xtype: 'core_person',
+      name: 'pilot2_role',
+     },
+
+     {
+      xtype: 'acao_aircraft',
+      name: 'aircraft_id',
+     },
+
+     {
+      xtype: 'datetimefield',
+      name: 'takeoff_time',
+     },
+     {
+      xtype: 'datetimefield',
+      name: 'landing_time',
+     },
+
+     {
+      xtype: 'textfield',
+      name: 'takeoff_location',
+     },
+     {
+      xtype: 'textfield',
+      name: 'landing_location',
+     },
+    ],
+   },
+  ],
+
+  nav: [
+  ],
+
+  reports: [],
+});

@@ -4,7 +4,7 @@ module Acao
 module MainDb
 
 class SocioIscritto < ActiveRecord::Base
-  establish_connection :acao_sqlserver
+  establish_connection :acao_sql_server
 
   self.table_name = :soci_iscritti
 

@@ -1,0 +1,59 @@
+/*
+ * Copyright (C) 2013-2017, Daniele Orlandi
+ *
+ * Author:: Daniele Orlandi <daniele@orlandi.com>
+ *
+ * License:: You can redistribute it and/or modify it under the terms of the LICENSE file.
+ *
+ */
+
+Ext.define('Extgui.Ygg.Acao.Tracker.ObjectPanel', {
+  extend: 'Extgui.object.panel.Base',
+  requires: [
+    'Extgui.Ygg.Acao.Plugin',
+    'Extgui.Ygg.Acao.Tracker',
+    'Extgui.Ygg.Acao.Aircraft.ReferenceField',
+  ],
+
+  extguiObject: 'Extgui.Ygg.Acao.Tracker',
+  modifyButton: false,
+  destroyButton: false,
+  logPanel: false,
+  notificationsPanel: false,
+
+  tabs: [
+   {
+    xtype: 'panel',
+    title: i18n('extgui.ygg.acao.tracker.object_panel.object_tab'),
+    padding: 10,
+    layout: 'anchor',
+    items: [
+     {
+      xtype: 'acao_aircraft',
+      name: 'aircraft_id',
+     },
+     {
+      xtype: 'combobox',
+      name: 'type',
+      width: 370,
+      queryMode: 'local',
+      editable: false,
+      value: null,
+      store: [
+       [ 'FLARM', 'FLARM' ],
+      ],
+     },
+     {
+      xtype: 'textfield',
+      name: 'identifier',
+     },
+    ],
+   },
+  ],
+
+
+  nav: [
+  ],
+
+  reports: [],
+});

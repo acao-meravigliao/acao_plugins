@@ -20,6 +20,8 @@ class Meter::RestController < Ygg::Hel::RestController
     attribute(:name) { show! }
     attribute(:descr) { show! }
     attribute(:person) { show! }
+    attribute(:power) { show! }
+    attribute(:total_energy) { show! }
   end
 
   view :edit do

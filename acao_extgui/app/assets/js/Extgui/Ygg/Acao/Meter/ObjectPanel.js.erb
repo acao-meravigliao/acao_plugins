@@ -1,0 +1,122 @@
+/*
+ * Copyright (C) 2016-2017, Daniele Orlandi
+ *
+ * Author:: Daniele Orlandi <daniele@orlandi.com>
+ *
+ * License:: You can redistribute it and/or modify it under the terms of the LICENSE file.
+ *
+ */
+
+Ext.define('Extgui.Ygg.Acao.Meter.ObjectPanel', {
+  extend: 'Extgui.object.panel.Base',
+  requires: [
+    'Extgui.Ygg.Acao.Plugin',
+    'Extgui.Ygg.Acao.Meter',
+    'Extgui.Ygg.Core.Person.ReferenceField',
+    'Extgui.Ygg.Acao.MeterBus.ReferenceField',
+  ],
+  extguiObject: 'Extgui.Ygg.Acao.Meter',
+
+  destroyButton: true,
+  requestDeletionButton: false,
+  tabs: {
+    title: i18n('extgui.acao.meter.object_panel.object_tab'),
+    padding: 10,
+    layout: 'anchor',
+    items: [
+     {
+      xtype: 'textfield',
+      name: 'name',
+     },
+     {
+      xtype: 'textfield',
+      name: 'descr',
+     },
+     {
+      xtype: 'acao_meter_bus',
+      name: 'bus_id',
+     },
+     {
+      xtype: 'engnumberfield',
+      name: 'bus_address',
+     },
+     {
+      xtype: 'core_person',
+      name: 'person_id',
+     },
+     {
+      xtype: 'datetimefield',
+      name: 'last_update',
+      acl: 'R',
+     },
+     {
+      xtype: 'engnumberfield',
+      name: 'voltage',
+      acl: 'R',
+      unit: 'V',
+     },
+     {
+      xtype: 'engnumberfield',
+      name: 'current',
+      acl: 'R',
+      unit: 'A',
+     },
+     {
+      xtype: 'engnumberfield',
+      name: 'power',
+      acl: 'R',
+      unit: 'W',
+     },
+     {
+      xtype: 'engnumberfield',
+      name: 'app_power',
+      acl: 'R',
+      unit: 'VA',
+     },
+     {
+      xtype: 'engnumberfield',
+      name: 'rea_power',
+      acl: 'R',
+      unit: 'VAr',
+     },
+     {
+      xtype: 'engnumberfield',
+      name: 'frequency',
+      acl: 'R',
+      unit: 'Hz',
+     },
+     {
+      xtype: 'numberfield',
+      name: 'power_factor',
+      acl: 'R',
+     },
+     {
+      xtype: 'engnumberfield',
+      name: 'exported_energy',
+      acl: 'R',
+      unit: 'Wh',
+      multiplier: 1000,
+     },
+     {
+      xtype: 'engnumberfield',
+      name: 'imported_energy',
+      acl: 'R',
+      unit: 'Wh',
+      multiplier: 1000,
+     },
+     {
+      xtype: 'engnumberfield',
+      name: 'total_energy',
+      acl: 'R',
+      unit: 'Wh',
+      multiplier: 1000,
+     },
+     {
+      xtype: 'textarea',
+      name: 'notes',
+      height: 120,
+      anchor: '100%',
+     },
+    ],
+  },
+});
