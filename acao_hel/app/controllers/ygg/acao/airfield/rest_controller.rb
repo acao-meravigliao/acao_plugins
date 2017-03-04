@@ -1,17 +1,16 @@
 #
-# Copyright (C) 2008-2016, Daniele Orlandi
+# Copyright (C) 2016-2017, Daniele Orlandi
 #
 # Author:: Daniele Orlandi <daniele@orlandi.com>
 #
 # License:: You can redistribute it and/or modify it under the terms of the LICENSE file.
 #
 
-require 'trk_models/version'
-
 module Ygg
-module Trk
+module Acao
 
-class ModelsEngine < Rails::Engine
+class Airfield::RestController < Ygg::Hel::RestController
+  ar_controller_for Ygg::Acao::Airfield
 end
 
 end

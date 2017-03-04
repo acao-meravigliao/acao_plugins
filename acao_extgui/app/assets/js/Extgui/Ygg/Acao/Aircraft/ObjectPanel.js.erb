@@ -12,6 +12,8 @@ Ext.define('Extgui.Ygg.Acao.Aircraft.ObjectPanel', {
   requires: [
     'Extgui.Ygg.Acao.Plugin',
     'Extgui.Ygg.Acao.Aircraft',
+    'Extgui.Ygg.Acao.AircraftType.ReferenceField',
+    'Extgui.Ygg.Core.Person.ReferenceField',
   ],
 
 //  title: 'Aircraft...',
@@ -19,10 +21,6 @@ Ext.define('Extgui.Ygg.Acao.Aircraft.ObjectPanel', {
 //  imageSrc: '<%= image_path 'email/aircraft_64x64.png' %>',
 //  tabTitleTpl: '{registration}',
 //  panelTitleTpl: '<div class="name">Aircraft</div><div class="value">{registration}</div>',
-  modifyButton: false,
-  destroyButton: false,
-  logPanel: false,
-  notificationsPanel: false,
 
   tabs: [
    {
@@ -33,44 +31,59 @@ Ext.define('Extgui.Ygg.Acao.Aircraft.ObjectPanel', {
     items: [
      {
       xtype: 'textfield',
-      name: 'flarm_code',
-      fieldLabel: 'Codice FLARM',
-      acl: 'R',
-     },
-     {
-      xtype: 'textfield',
-      name: 'owner_name',
-      fieldLabel: 'Proprietario',
-      acl: 'R',
-     },
-     {
-      xtype: 'textfield',
-      name: 'home_airport',
-      fieldLabel: 'Aeroporto',
-      acl: 'R',
-     },
-     {
-      xtype: 'textfield',
-      name: 'type_name',
-      fieldLabel: 'Tipo',
-      acl: 'R',
+      name: 'registration',
+      cls: 'acao_aircraft_registration',
+      width: 200,
      },
      {
       xtype: 'textfield',
       name: 'race_registration',
-      fieldLabel: 'Sigle di Gara',
+      cls: 'acao_aircraft_race_registration',
+      width: 160,
+     },
+     {
+      xtype: 'acao_aircraft_type',
+      name: 'aircraft_type_id',
+     },
+     {
+      xtype: 'core_person',
+      name: 'owner_id',
+     },
+     {
+      xtype: 'textfield',
+      name: 'flarm_identifier',
+      maxLength: 6,
+      minLength: 6,
+      cls: 'acao_flarm_identifier',
+      width: 200,
+     },
+     {
+      xtype: 'textfield',
+      name: 'icao_identifier',
+      maxLength: 6,
+      minLength: 6,
+      cls: 'acao_flarm_identifier',
+      width: 200,
+     },
+
+     {
+      xtype: 'textfield',
+      name: 'fn_owner_name',
       acl: 'R',
      },
      {
       xtype: 'textfield',
-      name: 'registration',
-      fieldLabel: 'Marche',
+      name: 'fn_home_airport',
       acl: 'R',
      },
      {
       xtype: 'textfield',
-      name: 'common_radio_frequency',
-      fieldLabel: 'Frequenza Radio',
+      name: 'fn_type_name',
+      acl: 'R',
+     },
+     {
+      xtype: 'textfield',
+      name: 'fn_common_radio_frequency',
       acl: 'R',
      },
     ],

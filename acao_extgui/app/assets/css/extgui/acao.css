@@ -1,2 +1,17 @@
 
 //=require extgui
+
+.acao_flarm_identifier input {
+  font-family: monospace;
+  font-weight: bold;
+}
+
+.acao_aircraft_registration input {
+  font-family: monospace;
+  font-weight: bold;
+}
+
+.acao_aircraft_race_registration input {
+  font-family: monospace;
+  font-weight: bold;
+}

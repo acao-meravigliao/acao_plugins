@@ -14,10 +14,5 @@ module Acao
 class ModelsEngine < Rails::Engine
 end
 
-class ModelsPlugin < Ygg::Plugin
-end
-
-Ygg::Plugins.register(ModelsPlugin)
-
 end
 end

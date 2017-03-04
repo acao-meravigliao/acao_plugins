@@ -14,10 +14,5 @@ module Acao
 class MaindbModelsEngine < Rails::Engine
 end
 
-class MaindbModelsPlugin < Ygg::Plugin
-end
-
-Ygg::Plugins.register(MaindbModelsPlugin)
-
 end
 end

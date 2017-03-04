@@ -31,6 +31,16 @@ Rails.application.routes.draw do
       hel_resources :pilots, controller: 'pilot/rest' do
       end
 
+      hel_resources :airfields, controller: 'airfield/rest' do
+      end
+
+      hel_resources :radar_points, controller: 'radar_point/rest' do
+        collection do
+          get 'track/:year/:month/:day/:aircraft_id' => :track_day
+          get 'track' => :track
+        end
+      end
+
     end
   end
 end

@@ -12,9 +12,10 @@ module Ygg
 module Acao
 
 class ExtguiEngine < Rails::Engine
-end
+  include Extgui::EngineHelper
 
-class ExtguiPlugin < Ygg::Plugin
+  config.acao_extgui = ActiveSupport::OrderedOptions.new if !defined? config.acao_extgui
+
   def extgui_menu_tree
    lambda { {
 
@@ -24,42 +25,53 @@ class ExtguiPlugin < Ygg::Plugin
         text: 'ACAO',
 #        icon: image_path('ml/ml-16x16.png'),
       },
-    flights: {
-      _node_: {
-        text: 'Flights',
-        uri: 'model/ygg/acao/flights/',
-      }
-    },
-    timetable: {
-      _node_: {
-        text: 'Timetable',
-        uri: 'model/ygg/acao/timetable_entries/',
-      }
-    },
-    pilots: {
-      _node_: {
-        text: 'Pilots',
-        uri: 'model/ygg/acao/pilots/',
-      }
-    },
-    aircrafts: {
-      _node_: {
-        text: 'Aircrafts',
-        uri: 'model/ygg/acao/aircrafts/',
-      }
-    },
-    aircraft_types: {
-      _node_: {
-        text: 'Aircraft Types',
-        uri: 'model/ygg/acao/aircraft_types/',
-      }
-    },
-    trackers: {
-      _node_: {
-        text: 'Trackers',
-        uri: 'model/ygg/acao/trackers/',
-      }
-    },
+      flights: {
+        _node_: {
+          text: 'Flights',
+          uri: 'model/ygg/acao/flights/',
+        }
+      },
+      timetable: {
+        _node_: {
+          text: 'Timetable',
+          uri: 'model/ygg/acao/timetable_entries/',
+        }
+      },
+      pilots: {
+        _node_: {
+          text: 'Pilots',
+          uri: 'model/ygg/acao/pilots/',
+        }
+      },
+      aircrafts: {
+        _node_: {
+          text: 'Aircrafts',
+          uri: 'model/ygg/acao/aircrafts/',
+        }
+      },
+      aircraft_types: {
+        _node_: {
+          text: 'Aircraft Types',
+          uri: 'model/ygg/acao/aircraft_types/',
+        }
+      },
+      trackers: {
+        _node_: {
+          text: 'Trackers',
+          uri: 'model/ygg/acao/trackers/',
+        }
+      },
+      setup: {
+        _node_: {
+          text: 'Setup',
+        },
+        airfields: {
+          _node_: {
+            text: 'Airfields',
+            uri: 'model/ygg/acao/airfields/',
+          }
+        },
+      },
     },
 
     meters: {
@@ -82,15 +94,18 @@ class ExtguiPlugin < Ygg::Plugin
 #          icon: image_path('ml/lists-16x16.png'),
         }
       },
-
-
-
     },
    } }
   end
-end
 
-Ygg::Plugins.register(ExtguiPlugin)
+  def extgui_config
+   {
+    acao: {
+      radar_processed_traffic_exchange: Rails.application.config.acao_extgui.radar_processed_traffic_exchange,
+    },
+   }
+  end
+end
 
 end
 end

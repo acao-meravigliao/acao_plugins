@@ -8,8 +8,37 @@
  */
 
 Ext.define('Extgui.Ygg.Acao.Radar', {
+  extend: 'Ext.panel.Panel',
   requires: [
     'Extgui.AjaxJson',
+    'Extgui.gmaps.Map',
+    'Ext.window.MessageBox',
+  ],
+  alias: 'widget.acao_radar',
+
+  extrapolateEnable: true,
+  extrapolateDelay: 75,
+
+  border: false,
+  layout: 'fit',
+  items: [
+   {
+    xtype: 'gmap',
+    id: 'radar-map-canvas',
+    gmapType: 'SATELLITE',
+    mapConf: {
+      scrollWheel: true,
+      streetViewControl: false,
+      draggable: true,
+      panControl: false,
+    },
+    minAccuracy: 1000,
+    zoomLevel: 15,
+    center: {
+      lat: 45.812709,
+      lng: 8.763742,
+    },
+   },
   ],
 
   fix_types: {
@@ -19,31 +48,84 @@ Ext.define('Extgui.Ygg.Acao.Radar', {
     3: '3D'
   },
 
-  constructor: function(pars) {
+  types: {
+    0: { name: 'unknown', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
+    1: { name: 'Aliante', icon: 'M -5,0 5,0 M 0,-1 0,3 M -1,3 1,3 z', color: 'white' },
+    2: { name: 'Traino', icon: 'M -3,0 3,0 M 0,-0.5 0,2 M -1,2 1,2 M -0.5,-0.5 0.5,-0.5 z', color: 'orange' },
+    3: { name: 'Elicottero', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
+    4: { name: 'Paracadutista', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
+    5: { name: 'Aereo Paracadutisti', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
+    6: { name: 'Deltaplano', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
+    7: { name: 'Parapendio', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
+    8: { name: 'Aereo a motore', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
+    9: { name: 'Jet', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
+    10: { name: 'Disco volante', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
+    11: { name: 'Mongolfiera', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
+    12: { name: 'Dirigibile', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
+    13: { name: 'UAV', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
+    14: { name: 'unknown', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
+    15: { name: 'Oggetto', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
+  },
+
+
+  initComponent: function() {
     var me = this;
 
-    me.ws = pars.ws;
+    if (!me.processedTrafficExchange)
+      me.processedTrafficExchange = Extgui.app.acao.radar_processed_traffic_exchange;
 
-    me.map = new google.maps.Map(document.getElementById("map-canvas"), {
-      center: new google.maps.LatLng(45.812709,8.763742),
-      zoom: 16,
-      mapTypeId: google.maps.MapTypeId.SATELLITE,
-    });
+    me.callParent(arguments);
 
-    me.circuitLayer = new google.maps.KmlLayer(window.location.origin + '/circuit.kml');
-    me.circuitLayer.setMap(me.map);
+    me.down('gmap').on('mapready', function() {
+      me.map = me.down('gmap').gmap;
 
-  //  new google.maps.Marker({
-  //    position: new google.maps.LatLng(45.808025,8.772275),
-  //    title: 'Camera 1',
-  //    map: map
-  //  });
-
-    me.iw = new google.maps.InfoWindow({
+      Ext.Loader.loadScriptFile('<%=asset_path('markerwithlabel.js')%>',
+        function() { me.onMapReady() },
+        function() { console.log("FAILURE"); }
+      );
     });
 
     me.traffics = {};
     me.stations = {};
+  },
+
+  onMapReady: function() {
+    var me = this;
+
+    me.circuitLayer = new google.maps.KmlLayer(window.location.origin + '/circuit.kml');
+    me.circuitLayer.setMap(me.map);
+
+    me.iw = new google.maps.InfoWindow({
+    });
+
+//    Extgui.AjaxJson.request({
+//      url: '/acao/track',
+//      method: 'GET',
+//      params: {
+//        plane_id: 6449,
+//        from: '2015-06-03T11:42:04.000Z',
+//        to: '2015-06-03T11:59:04.000Z',
+//      },
+//      success: function(resp) {
+//        me.history = resp.responseJSON;
+//
+//        me.periodicTask = Ext.util.TaskManager.start({
+//          interval: 1000,
+//          run: me.playHistory,
+//          scope: me,
+//        });
+//      },
+//    });
+
+    me.mapReady = true;
+    if (me.wsReady && me.mapReady)
+      me.onAllReady();
+  },
+
+  setWebSocket: function(ws) {
+    var me = this;
+
+    me.ws = ws;
 
     if (me.ws.state != 'READY') {
       var sub = me.ws.on({
@@ -55,15 +137,110 @@ Ext.define('Extgui.Ygg.Acao.Radar', {
       });
     } else
       me.onOnline();
-
-    setInterval(function() { me.periodicCleanup(); }, 2000);
-    setInterval(function() { me.extrapolate(); }, 75);
   },
 
   onOnline: function() {
     var me = this;
 
-    me.ws.subscribe('ygg.glideradar.processed_traffic', {}, me.onMessage, me);
+    me.ws.subscribe(me.processedTrafficExchange, {
+      onMessage: me.onMessage,
+      scope: me,
+      success: function(sub) { console.log("SUCCESS"); },
+      failure: function(sub, subReq, msg) { Ext.Msg.alert('Error subscribing to radar traffic:', msg.reason) },
+    });
+
+    me.wsReady = true;
+    if (me.wsReady && me.mapReady)
+      me.onAllReady();
+  },
+
+  onAllReady: function() {
+    var me = this;
+
+    me.allReady = true,
+
+    me.periodicTask = Ext.util.TaskManager.start({
+      interval: 2000,
+      run: me.periodicCleanup,
+      scope: me,
+    });
+
+    me.setExtrapolateEnable(me.extrapolateEnable);
+
+  },
+
+  drawTrack: function(aircraft_id, from_time, to_time, success, failure) {
+    var me = this;
+
+    var args = { aircraft_id: aircraft_id };
+
+    if (from_time)
+      args.from = from_time;
+
+    if (to_time)
+      args.to = to_time;
+
+    Extgui.AjaxJson.request({
+      url: '/ygg/acao/radar_points/track?' + Ext.urlEncode(args),
+      method: 'GET',
+      params: {
+      },
+      success: function(resp) {
+        var track = me.doDrawTrack(resp.responseJSON);
+
+        if (success)
+          success(track);
+      },
+      failure: failure,
+    });
+  },
+
+  doDrawTrack: function(path) {
+    var me = this;
+
+    var track = new google.maps.Polyline({
+      path: path,
+      strokeColor: '#FF0000',
+      strokeOpacity: 0.5,
+      strokeWeight: 3
+    });
+
+    var bounds = new google.maps.LatLngBounds();
+    for (var i = 0; i < path.length; i++) {
+      bounds.extend(path[i]);
+    }
+
+    me.map.fitBounds(bounds);
+    track.setMap(me.map);
+
+    return track;
+  },
+
+  playHistory: function() {
+    var me = this;
+
+    var tra = me.history.shift();
+    if (tra)
+      me.onTrafficUpdate(tra.flarm_id, tra);
+  },
+
+  setExtrapolateEnable: function(enable) {
+    var me = this;
+
+    me.extrapolateEnable = enable;
+
+    if (me.extrapolateTask) {
+      clearInterval(me.extrapolateTask);
+      me.extrapolateTask = null;
+    }
+
+    if (enable) {
+      me.extrapolateTask = Ext.util.TaskManager.start({
+        interval: me.extrapolateDelay,
+        run: me.extrapolate,
+        scope: me,
+      });
+    }
   },
 
   onMessage: function(message) {
@@ -71,11 +248,27 @@ Ext.define('Extgui.Ygg.Acao.Radar', {
 
 //    console.log("MSG=", message);
 
+    if (!me.allReady)
+      return;
+
     switch(message.headers.type) {
     case 'TRAFFICS_UPDATE':
       me.onTrafficsUpdate(message.payload);
     break;
+    case 'TRAFFIC_NEW':
+      me.onTrafficNew(message.payload);
+    break;
     }
+  },
+
+  onTrafficNew: function(message) {
+    var me = this;
+
+    var tra = me.findOrCreateTraffic(message.flarm_id);
+
+    tra.plane_info = message.plane_info;
+
+    me.updateTrafficLabel(tra);
   },
 
   onTrafficsUpdate: function(message) {
@@ -148,7 +341,7 @@ Ext.define('Extgui.Ygg.Acao.Radar', {
   onTrafficUpdate: function(flarm_id, data) {
     var me = this;
 
-    tra = me.findOrCreateTraffic(flarm_id);
+    var tra = me.findOrCreateTraffic(flarm_id);
 
     if (!tra.aircraft_info && !tra.loading && !tra.loadFailure) {
       tra.loading = true;
@@ -156,6 +349,7 @@ Ext.define('Extgui.Ygg.Acao.Radar', {
       Extgui.AjaxJson.request({
         url: '/ygg/acao/aircrafts/by_code/' + tra.flarm_id,
         method: 'GET',
+        disableCaching: false,
         callback: function() {
           tra.loading = false;
         },
@@ -236,25 +430,6 @@ Ext.define('Extgui.Ygg.Acao.Radar', {
     });
   },
 
-  types: {
-    0: { name: 'unknown', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
-    1: { name: 'Aliante', icon: 'M -5,0 5,0 M 0,-1 0,3 M -1,3 1,3 z', color: 'white' },
-    2: { name: 'Traino', icon: 'M -3,0 3,0 M 0,-0.5 0,2 M -1,2 1,2 M -0.5,-0.5 0.5,-0.5 z', color: 'orange' },
-    3: { name: 'Elicottero', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
-    4: { name: 'Paracadutista', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
-    5: { name: 'Aereo Paracadutisti', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
-    6: { name: 'Deltaplano', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
-    7: { name: 'Parapendio', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
-    8: { name: 'Aereo a motore', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
-    9: { name: 'Jet', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
-    10: { name: 'Disco volante', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
-    11: { name: 'Mongolfiera', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
-    12: { name: 'Dirigibile', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
-    13: { name: 'UAV', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
-    14: { name: 'unknown', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
-    15: { name: 'Oggetto', icon: 'M -5,0 5,0 M 0,-1 0,4 M -1,4 1,4 z', color: 'white' },
-  },
-
   updateTrafficPosition: function(tra) {
     var me = this;
 
@@ -298,6 +473,9 @@ Ext.define('Extgui.Ygg.Acao.Radar', {
       'Speed: ' + (tra.sog * 3.6).toFixed(0) + ' km/h<br />' +
       'V/S: ' + (tra.cr * 3.6).toFixed(1) + ' m/s<br />';
 
+    if (!txt)
+      console.log("AHHHHHHHHHHHRGH");
+
     me.iw.setContent(txt);
   },
 
@@ -309,13 +487,7 @@ Ext.define('Extgui.Ygg.Acao.Radar', {
   updateTrafficLabel: function(tra) {
     var me = this;
 
-    if (tra.aircraft_info)
-      tra.marker.set('labelContent', tra.aircraft_info.registration || tra.aircraft_info.flarm_id);
-    else
-      tra.marker.set('labelContent', 'N/A');
-
-    tra.marker.label.setStyles();
-    tra.marker.label.draw();
+    tra.marker.set('labelContent', (tra.aircraft_info ? tra.aircraft_info.registration : null) || tra.flarm_id);
   },
 
   refreshStation: function(station) {
@@ -350,14 +522,18 @@ Ext.define('Extgui.Ygg.Acao.Radar', {
   updateStationIw: function(station) {
     var me = this;
 
-    me.iw.setContent(
+    var txt =
       'Station: ' + station.station_id + '<br />' +
       'GPS fix type: ' + me.fix_types[station.data.gps_fix_type] + ' (' + station.data.gps_sats + ' sats)<br />' +
       'GPS fix quality: ' + station.data.gps_fix_qual + '<br />' +
       'GPS precision: ' + station.data.gps_pdop + '<br />' +
       'Lat: ' + station.data.lat.toFixed(8) + '°<br />' +
       'Lng: ' + station.data.lng.toFixed(8) + '°<br />' +
-      'Altitude: ' + station.data.alt + ' m<br />'
-    );
+      'Altitude: ' + station.data.alt + ' m<br />';
+
+    if (!txt)
+      console.log("AHHHHHHHHHHHRGH2");
+
+    me.iw.setContent(txt);
   },
 });

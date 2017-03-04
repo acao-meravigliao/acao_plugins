@@ -14,10 +14,5 @@ module Acao
 class HelEngine < Rails::Engine
 end
 
-class HelPlugin < Ygg::Plugin
-end
-
-Ygg::Plugins.register(HelPlugin)
-
 end
 end

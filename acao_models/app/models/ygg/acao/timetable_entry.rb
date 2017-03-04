@@ -20,6 +20,18 @@ class TimetableEntry < Ygg::PublicModel
 
   belongs_to :towed_by,
              class_name: '::Ygg::Acao::TimetableEntry'
+
+  belongs_to :takeoff_location,
+             class_name: '::Ygg::Core::Location'
+
+  belongs_to :landing_location,
+             class_name: '::Ygg::Core::Location'
+
+  belongs_to :takeoff_airfield,
+             class_name: '::Ygg::Acao::Airfield'
+
+  belongs_to :landing_airfield,
+             class_name: '::Ygg::Acao::Airfield'
 end
 
 end

@@ -35,7 +35,10 @@ Ext.define('Extgui.Ygg.Acao.Meteo', {
   onOnline: function() {
     var me = this;
 
-    me.ws.subscribe('ygg.meteo.updates', {}, me.onMessage, me);
+    me.ws.subscribe('ygg.meteo.updates', {
+      onMessage: me.onMessage,
+      scope: me,
+    });
   },
 
   onMessage: function(message) {

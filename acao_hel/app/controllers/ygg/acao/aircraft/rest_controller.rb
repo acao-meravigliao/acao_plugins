@@ -16,16 +16,23 @@ class Aircraft::RestController < Ygg::Hel::RestController
 
   def by_code
     if match = /([a-z]+):(.*)/.match(params[:id])
-      ar_resource = Ygg::Acao::Aircraft.joins(:trackers).where(acao_trackers: { type: match[1].upcase, identifier: match[2].upcase }).first
+      case match[1].upcase
+      when 'FLARM'
+        ar_resource = Ygg::Acao::Aircraft.find_by_flarm_identifier(match[2].upcase)
+      when 'ICAO'
+        ar_resource = Ygg::Acao::Aircraft.find_by_icao_identifier(match[2].upcase)
+      else
+        raise "Identifier type '#{match[1]}' not supported"
+      end
 
       if ar_resource
         expires_in 1.hour, public: true
         ar_respond_with(ar_resource)
       else
-        head status: 404
+        ar_respond_with({}, status: 404)
       end
     else
-      head status: 404
+      ar_respond_with({}, status: 404)
     end
   end
 end

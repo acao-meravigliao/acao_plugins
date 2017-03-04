@@ -51,6 +51,7 @@ Ext.define('Extgui.Ygg.Acao.Aircraft.IndexPanel', {
     width: 150,
    },
   ],
+
   actions: [
    {
     name: 'new',

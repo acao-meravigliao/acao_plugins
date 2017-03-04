@@ -1,0 +1,54 @@
+/*
+ * Copyright (C) 2013-2017, Daniele Orlandi
+ *
+ * Author:: Daniele Orlandi <daniele@orlandi.com>
+ *
+ * License:: You can redistribute it and/or modify it under the terms of the LICENSE file.
+ *
+ */
+
+Ext.define('Extgui.Ygg.Acao.Airfield.ObjectPanel', {
+  extend: 'Extgui.object.panel.Base',
+  requires: [
+    'Extgui.Ygg.Acao.Plugin',
+    'Extgui.Ygg.Acao.Airfield',
+    'Extgui.Ygg.Core.Location.ReferenceField',
+  ],
+
+  extguiObject: 'Extgui.Ygg.Acao.Airfield',
+
+  tabs: [
+   {
+    xtype: 'panel',
+    title: i18n('extgui.acao.airfield.object_panel.object_tab'),
+    padding: 10,
+    layout: 'anchor',
+    items: [
+     {
+      xtype: 'textfield',
+      name: 'name',
+      anchor: '100%',
+     },
+     {
+      xtype: 'textfield',
+      name: 'icao_code',
+      minLength: 4,
+      maxLength: 4,
+     },
+     {
+      xtype: 'core_location',
+      name: 'location',
+     },
+     {
+      xtype: 'numberfield',
+      name: 'radius',
+     },
+    ],
+   },
+  ],
+
+  nav: [
+  ],
+
+  reports: [],
+});
