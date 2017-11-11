@@ -50,6 +50,20 @@ Ext.define('Extgui.Ygg.Acao.Aircraft.IndexPanel', {
     searchable: true,
     width: 150,
    },
+   {
+    xtype: 'stringtemplatecolumn',
+    dataIndex: 'flarm_identifier',
+    filterable: true,
+    searchable: true,
+    width: 150,
+   },
+   {
+    xtype: 'stringtemplatecolumn',
+    dataIndex: 'icao_identifier',
+    filterable: true,
+    searchable: true,
+    width: 150,
+   },
   ],
 
   actions: [

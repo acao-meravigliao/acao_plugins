@@ -41,6 +41,33 @@ Rails.application.routes.draw do
         end
       end
 
+      hel_resources :memberships, controller: 'membership/rest' do
+        collection do
+          get 'renew' => :renew_context
+          post 'renew' => :renew_do
+        end
+      end
+
+      hel_resources :service_types, controller: 'service_type/rest' do
+      end
+
+      hel_resources :roster_days, controller: 'roster_day/rest' do
+      end
+
+      hel_resources :roster_entries, controller: 'roster_entry/rest' do
+        collection do
+          get 'status' => :get_status
+        end
+      end
+
+      hel_resources :years, controller: 'year/rest' do
+      end
+
+      hel_resources :payments, controller: 'payment/rest' do
+      end
+
+      hel_resources :person_services, controller: 'person_service/rest' do
+      end
     end
   end
 end

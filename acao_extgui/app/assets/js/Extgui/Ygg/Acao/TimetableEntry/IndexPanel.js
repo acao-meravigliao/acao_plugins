@@ -21,7 +21,7 @@ Ext.define('Extgui.Ygg.Acao.TimetableEntry.IndexPanel', {
   model: 'Ygg.Acao.TimetableEntry',
   storeConfig: {
     sorters: {
-      property: 'takeoff_at',
+      property: 'created_at',
       direction: 'DESC',
     },
   },
@@ -40,6 +40,15 @@ Ext.define('Extgui.Ygg.Acao.TimetableEntry.IndexPanel', {
     tpl: '<tpl if="pilot">{pilot.person.first_name} {pilot.person.last_name}</tpl>',
     searchable: true,
     width: 100,
+   },
+   {
+    xtype: 'datecolumn',
+    dataIndex: 'created_at',
+    filterable: true,
+    searchable: true,
+    hidden: true,
+    width: 90,
+    format: 'H:i:s',
    },
    {
     xtype: 'datecolumn',

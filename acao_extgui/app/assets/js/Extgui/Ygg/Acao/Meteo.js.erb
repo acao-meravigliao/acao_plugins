@@ -8,6 +8,9 @@
  */
 
 Ext.define('Extgui.Ygg.Acao.Meteo', {
+//  requires: [
+//    'Extgui.Util',
+//  ],
 
   constructor: function(args) {
     var me = this;
@@ -140,8 +143,8 @@ Ext.define('Extgui.Ygg.Acao.Meteo', {
 
     if (u.WS_wind_2m_gst_ts) {
       if (m.WS_wind_2m_gst_ts !== undefined) {
-        var d = new Date(Date.parse(m.WS_wind_2m_gst_ts));
-        $('#wind_2m_gst_ts').text($.sprintf("%02d:%02d:%02d", d.getHours(), d.getMinutes(), d.getSeconds()));
+        var d = new Date() - Date.parse(m.WS_wind_2m_gst_ts);
+        $('#wind_2m_gst_ts').text(Extgui.Util.humanInterval(d / 1000) + ' ago');
       } else
         $('#wind_2m_gst_ts').text("INOP");
     }
@@ -189,8 +192,8 @@ Ext.define('Extgui.Ygg.Acao.Meteo', {
 
     if (u.WS_wind_10m_gst_ts) {
       if (m.WS_wind_10m_gst_ts !== undefined) {
-        var d = new Date(Date.parse(m.WS_wind_10m_gst_ts));
-        $('#wind_10m_gst_ts').text($.sprintf("%02d:%02d:%02d", d.getHours(), d.getMinutes(), d.getSeconds()));
+        var d = new Date() - Date.parse(m.WS_wind_10m_gst_ts);
+        $('#wind_10m_gst_ts').text(Extgui.Util.humanInterval(d / 1000) + ' ago');
       } else
         $('#wind_10m_gst_ts').text("INOP");
     }
@@ -202,7 +205,6 @@ Ext.define('Extgui.Ygg.Acao.Meteo', {
     if (u.WS_qnh) $('#qnh').text(m.WS_qnh !== undefined ? (m.WS_qnh / 100).toFixed(0) : "INOP");
     if (u.WS_isa_h) $('#isa_h').text(m.WS_isa_h !== undefined ? m.WS_isa_h.toFixed(1) : "INOP");
 
-    if (u.WS_temperature) $('#wind_temperature').text(m.WS_temperature !== undefined ? m.WS_temperature.toFixed(1) : "INOP");
     if (u.OMM_temperature) $('#temperature').text(m.OMM_temperature !== undefined ? m.OMM_temperature.toFixed(1) : "INOP");
     if (u.OMM_humidity) $('#humidity').text(m.OMM_humidity !== undefined ? m.OMM_humidity.toFixed(1) : "INOP");
     if (u.OMM_dewpoint) $('#dewpoint').text(m.OMM_dewpoint !== undefined ? m.OMM_dewpoint.toFixed(1) : "INOP");

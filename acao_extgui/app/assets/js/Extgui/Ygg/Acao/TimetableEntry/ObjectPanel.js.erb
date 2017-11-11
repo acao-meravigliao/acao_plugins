@@ -13,6 +13,9 @@ Ext.define('Extgui.Ygg.Acao.TimetableEntry.ObjectPanel', {
     'Extgui.Ygg.Acao.Plugin',
     'Extgui.Ygg.Acao.TimetableEntry',
     'Extgui.Ygg.Acao.Aircraft.ReferenceField',
+    'Extgui.Ygg.Acao.Airfield.ReferenceField',
+    'Extgui.Ygg.Core.Person.ReferenceField',
+    'Extgui.Ygg.Core.Location.ReferenceField',
   ],
 
 //  title: 'TimetableEntry...',
@@ -37,19 +40,72 @@ Ext.define('Extgui.Ygg.Acao.TimetableEntry.ObjectPanel', {
       name: 'aircraft_id',
      },
      {
-      xtype: 'combobox',
-      name: 'type',
-      width: 370,
-      queryMode: 'local',
-      editable: false,
-      value: null,
-      store: [
-       [ 'FLARM', 'FLARM' ],
-      ],
+      xtype: 'core_person',
+      name: 'pilot_id',
      },
      {
-      xtype: 'textfield',
-      name: 'identifier',
+      xtype: 'fieldcontainer',
+      i18nLabel: 'ygg.acao.timetable_entry.created_at',
+      items:
+       {
+        xtype: 'datetimefield',
+        name: 'created_at',
+       },
+     },
+     {
+      xtype: 'fieldcontainer',
+      i18nLabel: 'ygg.acao.timetable_entry.created_at',
+      items:
+       {
+        xtype: 'datetimefield',
+        name: 'takeoff_at',
+       },
+     },
+     {
+      xtype: 'core_location',
+      name: 'takeoff_location',
+     },
+     {
+      xtype: 'acao_airfield',
+      name: 'takeoff_airfield_id',
+     },
+     {
+      xtype: 'fieldcontainer',
+      i18nLabel: 'ygg.acao.timetable_entry.created_at',
+      items:
+       {
+        xtype: 'datetimefield',
+        name: 'landing_at',
+       },
+     },
+     {
+      xtype: 'core_location',
+      name: 'landing_location',
+     },
+     {
+      xtype: 'acao_airfield',
+      name: 'landing_airfield_id',
+     },
+     {
+      xtype: 'fieldcontainer',
+      i18nLabel: 'ygg.acao.timetable_entry.created_at',
+      items:
+       {
+        xtype: 'datetimefield',
+        name: 'tow_release_at',
+       },
+     },
+     {
+      xtype: 'core_location',
+      name: 'tow_release_location',
+     },
+     {
+      xtype: 'numberfield',
+      name: 'tow_height',
+     },
+     {
+      xtype: 'timefield',
+      name: 'tow_duration',
      },
     ],
    },

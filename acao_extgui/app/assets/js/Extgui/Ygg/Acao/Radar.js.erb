@@ -33,7 +33,7 @@ Ext.define('Extgui.Ygg.Acao.Radar', {
       panControl: false,
     },
     minAccuracy: 1000,
-    zoomLevel: 15,
+    zoomLevel: 14,
     center: {
       lat: 45.812709,
       lng: 8.763742,
@@ -92,8 +92,11 @@ Ext.define('Extgui.Ygg.Acao.Radar', {
   onMapReady: function() {
     var me = this;
 
-    me.circuitLayer = new google.maps.KmlLayer(window.location.origin + '/circuit.kml');
-    me.circuitLayer.setMap(me.map);
+    me.circuitLayer = new google.maps.KmlLayer(window.location.origin + '/circuit.kml', {
+      suppressInfoWindows: true,
+      map: me.map,
+      preserveViewport: true
+    });
 
     me.iw = new google.maps.InfoWindow({
     });
@@ -310,7 +313,7 @@ Ext.define('Extgui.Ygg.Acao.Radar', {
 
       tra.marker = new MarkerWithLabel({
         position: new google.maps.LatLng(0, 0),
-        labelContent: flarm_id || 'N/A',
+        labelContent: 'N/A',
         labelClass: 'label',
         map: me.map,
         tra: tra,
@@ -487,7 +490,18 @@ Ext.define('Extgui.Ygg.Acao.Radar', {
   updateTrafficLabel: function(tra) {
     var me = this;
 
-    tra.marker.set('labelContent', (tra.aircraft_info ? tra.aircraft_info.registration : null) || tra.flarm_id);
+    var label;
+
+    if (tra.aircraft_info) {
+      if (tra.aircraft_info.registration && tra.aircraft_info.race_registration)
+        label = tra.aircraft_info.registration + ' (' + tra.aircraft_info.race_registration + ')';
+      else
+        label = tra.aircraft_info.registration || tra.aircraft_info.race_registration;
+    }
+
+    label = label || tra.flarm_id || tra.icao_id || 'N/A';
+
+    tra.marker.set('labelContent', label);
   },
 
   refreshStation: function(station) {
@@ -529,7 +543,7 @@ Ext.define('Extgui.Ygg.Acao.Radar', {
       'GPS precision: ' + station.data.gps_pdop + '<br />' +
       'Lat: ' + station.data.lat.toFixed(8) + '°<br />' +
       'Lng: ' + station.data.lng.toFixed(8) + '°<br />' +
-      'Altitude: ' + station.data.alt + ' m<br />';
+      'Altitude: ' + station.data.alt + ' m (agl: ' + station.data.hgt + ')<br />';
 
     if (!txt)
       console.log("AHHHHHHHHHHHRGH2");

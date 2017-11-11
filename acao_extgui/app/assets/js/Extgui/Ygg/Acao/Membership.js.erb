@@ -1,0 +1,21 @@
+/*
+ * Copyright (C) 2017-2017, Daniele Orlandi
+ *
+ * Author:: Daniele Orlandi <daniele@orlandi.com>
+ *
+ * License:: You can redistribute it and/or modify it under the terms of the LICENSE file.
+ *
+ */
+
+Ext.define('Extgui.Ygg.Acao.Membership', {
+  extend: 'Extgui.object.Base',
+  requires: [
+    'Extgui.Ygg.Acao.Plugin',
+    'Ygg.Acao.Membership',
+  ],
+  singleton: true,
+
+  subTpl: [
+    '<span class="name">{year}</span>',
+  ],
+});

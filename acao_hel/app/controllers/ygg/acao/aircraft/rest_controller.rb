@@ -12,7 +12,7 @@ module Acao
 class Aircraft::RestController < Ygg::Hel::RestController
   ar_controller_for Ygg::Acao::Aircraft
 
-  skip_before_action :ensure_authenticated_and_authorized!, only: [ :by_code ]
+  skip_before_action :ensure_authenticated_and_authorized!, only: [ :index, :by_code ]
 
   def by_code
     if match = /([a-z]+):(.*)/.match(params[:id])

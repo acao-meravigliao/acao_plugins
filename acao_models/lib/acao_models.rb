@@ -12,6 +12,36 @@ module Ygg
 module Acao
 
 class ModelsEngine < Rails::Engine
+  config.to_prepare do
+    Ygg::Core::Person.class_eval do
+#      has_one :acao_pilot,
+#               class_name: '::Ygg::Acao::Pilot'
+
+      has_many :acao_memberships,
+               class_name: '::Ygg::Acao::Membership'
+
+      has_many :acao_payments,
+               class_name: '::Ygg::Acao::Payment'
+
+      has_many :acao_roster_entries,
+               class_name: '::Ygg::Acao::RosterEntry'
+
+      def acao_is_istruttore?
+        # XXX TODO
+        false
+      end
+
+      def acao_is_consigliere?
+        # XXX TODO
+        false
+      end
+
+      def acao_is_trainatore?
+        # XXX TODO
+        false
+      end
+    end
+  end
 end
 
 end

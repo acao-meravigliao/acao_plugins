@@ -35,6 +35,18 @@ Ext.define('Extgui.Ygg.Acao.Plugin', {
 
       'viewport > tabpanel > panel[klass=Extgui.Ygg.Acao.Airfield.IndexPanel] > panel > toolbar button[name=new]':
        { click: function(el, record) { me.openUri('model/ygg/acao/airfield/new'); }, },
+
+      'viewport > tabpanel > panel[klass=Extgui.Ygg.Acao.ServiceType.IndexPanel] > panel > toolbar button[name=new]':
+       { click: function(el, record) { me.openUri('model/ygg/acao/service_type/new'); }, },
+
+      'viewport > tabpanel > panel[klass=Extgui.Ygg.Acao.Year.IndexPanel] > panel > toolbar button[name=new]':
+       { click: function(el, record) { me.openUri('model/ygg/acao/years/new'); }, },
+
+      'viewport > tabpanel > panel[klass=Extgui.Ygg.Acao.RosterDay.IndexPanel] > panel > toolbar button[name=new]':
+       { click: function(el, record) { me.openUri('model/ygg/acao/roster_days/new'); }, },
+
+      'viewport > tabpanel > panel[klass=Extgui.Ygg.Acao.RosterEntry.IndexPanel] > panel > toolbar button[name=new]':
+       { click: function(el, record) { me.openUri('model/ygg/acao/roster_entries/new'); }, },
     });
   },
 });

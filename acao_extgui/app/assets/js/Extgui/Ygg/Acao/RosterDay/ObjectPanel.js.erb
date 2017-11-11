@@ -1,0 +1,52 @@
+/*
+ * Copyright (C) 2017-2017, Daniele Orlandi
+ *
+ * Author:: Daniele Orlandi <daniele@orlandi.com>
+ *
+ * License:: You can redistribute it and/or modify it under the terms of the LICENSE file.
+ *
+ */
+
+Ext.define('Extgui.Ygg.Acao.RosterDay.ObjectPanel', {
+  extend: 'Extgui.object.panel.Base',
+  requires: [
+    'Extgui.Ygg.Acao.Plugin',
+    'Extgui.form.field.DecimalNumber',
+    'Extgui.form.field.DateTime',
+    'Extgui.Ygg.Acao.RosterDay',
+  ],
+
+  extguiObject: 'Extgui.Ygg.Acao.RosterDay',
+
+  tabs: [
+   {
+    xtype: 'panel',
+    title: i18n('extgui.ygg.acao.roster_day.object_panel.object_tab'),
+    padding: 10,
+    layout: 'anchor',
+    items: [
+     {
+      xtype: 'datefield',
+      name: 'date',
+     },
+     {
+      xtype: 'checkboxfield',
+      name: 'high_season',
+     },
+     {
+      xtype: 'numberfield',
+      name: 'needed_people',
+     },
+     {
+      xtype: 'textfield',
+      name: 'descr',
+     },
+    ],
+   },
+  ],
+
+  nav: [
+  ],
+
+  reports: [],
+});

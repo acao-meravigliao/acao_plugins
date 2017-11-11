@@ -32,6 +32,9 @@ class TimetableEntry < Ygg::PublicModel
 
   belongs_to :landing_airfield,
              class_name: '::Ygg::Acao::Airfield'
+
+  belongs_to :tow_release_location,
+             class_name: '::Ygg::Core::Location'
 end
 
 end

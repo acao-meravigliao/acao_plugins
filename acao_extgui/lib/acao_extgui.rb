@@ -25,6 +25,30 @@ class ExtguiEngine < Rails::Engine
         text: 'ACAO',
 #        icon: image_path('ml/ml-16x16.png'),
       },
+      memberships: {
+        _node_: {
+          text: 'Memberships',
+          uri: 'model/ygg/acao/memberships/',
+        }
+      },
+      payments: {
+        _node_: {
+          text: 'Payments',
+          uri: 'model/ygg/acao/payments/',
+        }
+      },
+      roster_entries: {
+        _node_: {
+          text: 'Turni di linea',
+          uri: 'model/ygg/acao/roster_entries/',
+        }
+      },
+      person_services: {
+        _node_: {
+          text: 'Servizi',
+          uri: 'model/ygg/acao/person_services/',
+        }
+      },
       flights: {
         _node_: {
           text: 'Flights',
@@ -69,6 +93,24 @@ class ExtguiEngine < Rails::Engine
           _node_: {
             text: 'Airfields',
             uri: 'model/ygg/acao/airfields/',
+          }
+        },
+        service_types: {
+          _node_: {
+            text: 'Service Types',
+            uri: 'model/ygg/acao/service_types/',
+          }
+        },
+        roster_days: {
+          _node_: {
+            text: 'Giorni di linea',
+            uri: 'model/ygg/acao/roster_days/',
+          }
+        },
+        years: {
+          _node_: {
+            text: 'Years',
+            uri: 'model/ygg/acao/years/',
           }
         },
       },
