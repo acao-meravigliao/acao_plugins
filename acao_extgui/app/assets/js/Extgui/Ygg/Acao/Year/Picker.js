@@ -14,7 +14,7 @@ Ext.define('Extgui.Ygg.Acao.Year.Picker', {
     'Extgui.Ygg.Acao.Year',
     'Extgui.Ygg.Acao.Year.View',
   ],
-  alias: 'widget.acao_service_type_picker',
+  alias: 'widget.acao_year_picker',
 
   extguiObject: 'Extgui.Ygg.Acao.Year',
 

@@ -12,6 +12,15 @@ module Acao
 class RosterEntry::RestController < Ygg::Hel::RestController
   ar_controller_for Ygg::Acao::RosterEntry
 
+  # FIXME FIXME FIXME FIXME
+  capability(:anonymous,
+    allow_all_actions: true,
+    all_readable: true,
+    all_writable: true,
+    all_creatable: true,
+    recursive: true,
+  )
+
   def ar_apply_filter(rel, filter)
     if filter['today']
       (attr, path) = rel.nested_attribute('roster_day.date')
@@ -39,7 +48,22 @@ class RosterEntry::RestController < Ygg::Hel::RestController
 
   def get_status
     person = aaa_context.auth_person
-    membership = person.acao_memberships.find_by(year: Ygg::Acao::Year.renew_for_year)
+
+    renewal_year = Ygg::Acao::Year.renewal_year
+
+    if !renewal_year
+      ar_respond_with({
+        renew_for_year: nil,
+        needed_entries_present: true,
+        needed_total: 0,
+        needed_high_season: 0,
+        can_select_entries: false,
+      })
+
+      return
+    end
+
+    membership = person.acao_memberships.find_by(year: renewal_year.year)
 
     needed_entries_present = nil
     needed_total = nil
@@ -47,12 +71,12 @@ class RosterEntry::RestController < Ygg::Hel::RestController
     can_select_entries = false
     roster_entries = nil
 
-    if membership && (membership.status == 'VALID' || membership.status == 'WAITING_PAYMENT')
+    if membership && (membership.status == 'COMPLETED' || membership.status == 'WAITING_PAYMENT')
       can_select_entries = true
 
       roster_entries = person.acao_roster_entries.joins(:roster_day).where('acao_roster_days.date': (
-        DateTime.new(Ygg::Acao::Year.renew_for_year).beginning_of_year..
-        DateTime.new(Ygg::Acao::Year.renew_for_year).end_of_year
+        DateTime.new(renewal_year.year).beginning_of_year..
+        DateTime.new(renewal_year.year).end_of_year
       ))
 
       roster_entries_high = roster_entries.where('acao_roster_days.high_season')
@@ -87,12 +111,12 @@ class RosterEntry::RestController < Ygg::Hel::RestController
     end
 
     ar_respond_with({
-      renew_for_year: Ygg::Acao::Year.renewal_year,
+      renew_for_year: renewal_year.year,
       needed_entries_present: needed_entries_present,
       needed_total: needed_total,
       needed_high_season: needed_high_season,
       can_select_entries: can_select_entries,
-      #my: roster_entries ? Ygg::Acao::RosterEntry::RestController.new.ar_jsonapi(roster_entries, aaa_context: aaa_context) : nil,
+      possible_roster_chief: membership ? membership.possible_roster_chief : false,
     })
   end
 end

@@ -34,11 +34,27 @@ Ext.define('Extgui.Ygg.Acao.ServiceType.ObjectPanel', {
       name: 'name',
      },
      {
+      xtype: 'textfield',
+      name: 'descr',
+     },
+     {
       xtype: 'decimalnumberfield',
       name: 'price',
       unit: '€',
       anchor: '100%',
       minValue: 0,
+     },
+     {
+      xtype: 'checkboxfield',
+      name: 'available_for_shop',
+     },
+     {
+      xtype: 'checkboxfield',
+      name: 'available_for_membership_renewal',
+     },
+     {
+      xtype: 'textfield',
+      name: 'onda_code',
      },
      {
       xtype: 'textfield',

@@ -64,6 +64,9 @@ Rails.application.routes.draw do
       end
 
       hel_resources :payments, controller: 'payment/rest' do
+        member do
+          post 'complete' => :complete
+        end
       end
 
       hel_resources :person_services, controller: 'person_service/rest' do

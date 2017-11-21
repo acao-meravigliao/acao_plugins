@@ -14,6 +14,7 @@ Ext.define('Extgui.Ygg.Acao.Payment.ObjectPanel', {
     'Extgui.form.field.DecimalNumber',
     'Extgui.form.field.DateTime',
     'Extgui.Ygg.Acao.Payment',
+    'Extgui.Ygg.Core.Person.ReferenceField',
   ],
 
   extguiObject: 'Extgui.Ygg.Acao.Payment',
@@ -26,19 +27,43 @@ Ext.define('Extgui.Ygg.Acao.Payment.ObjectPanel', {
     layout: 'anchor',
     items: [
      {
-      xtype: 'textfield',
-      name: 'symbol',
+      xtype: 'core_person',
+      name: 'person_id',
      },
      {
       xtype: 'textfield',
-      name: 'name',
+      name: 'code',
      },
      {
-      xtype: 'decimalnumberfield',
-      name: 'price',
-      unit: '€',
-      anchor: '100%',
-      minValue: 0,
+      xtype: 'textfield',
+      name: 'state',
+     },
+     {
+      xtype: 'fieldcontainer',
+      fieldLabel: i18n('ygg.acao.payment.created_at'),
+      items:
+        {
+         xtype: 'datetimefield',
+         name: 'created_at',
+        },
+     },
+     {
+      xtype: 'fieldcontainer',
+      fieldLabel: i18n('ygg.acao.payment.created_at'),
+      items:
+        {
+         xtype: 'datetimefield',
+         name: 'expires_at',
+        },
+     },
+     {
+      xtype: 'fieldcontainer',
+      fieldLabel: i18n('ygg.acao.payment.created_at'),
+      items:
+        {
+         xtype: 'datetimefield',
+         name: 'completed_at',
+        },
      },
      {
       xtype: 'textfield',
@@ -52,8 +77,42 @@ Ext.define('Extgui.Ygg.Acao.Payment.ObjectPanel', {
    },
   ],
 
+  actions: [
+   {
+    name: 'complete',
+    i18nText: 'ygg.acao.payment.completed',
+   },
+  ],
+
   nav: [
   ],
 
   reports: [],
+
+  initComponent: function() {
+    var me = this;
+
+    me.callParent(arguments);
+
+    me.actionsToolbar.down('button[name=complete]').on('click', function() {
+      Ext.Msg.show({
+        title: 'Confermi?',
+        msg: 'Confermi il completamento del pagamento?',
+        buttons: Ext.Msg.YESNO,
+        fn: function(btn) {
+          if (btn == 'yes') {
+            me.setLoading('Requesting...');
+            Extgui.AjaxJson.request({
+              url: me.getRecord().helUri() + '/complete',
+              method: 'POST',
+              callback: function() { me.setLoading(false); },
+              success: function(resp) {
+              },
+              failure: Extgui.ExceptionWindow.ajaxFailure
+            });
+          }
+        },
+      });
+    });
+  },
 });

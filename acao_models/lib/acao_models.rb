@@ -26,19 +26,15 @@ class ModelsEngine < Rails::Engine
       has_many :acao_roster_entries,
                class_name: '::Ygg::Acao::RosterEntry'
 
-      def acao_is_istruttore?
-        # XXX TODO
-        false
-      end
+      def acao_send_initial_password
+        credential = credentials.where('fqda LIKE \'%@cp.acao.it\'').first
 
-      def acao_is_consigliere?
-        # XXX TODO
-        false
-      end
+        return if !credential
 
-      def acao_is_trainatore?
-        # XXX TODO
-        false
+        Ygg::Ml::Notifier.notify(destinations: self, template: 'SEND_INITIAL_PASSWORD', template_context: {
+          first_name: first_name,
+          password: credential.password,
+         }, objects: self)
       end
     end
   end

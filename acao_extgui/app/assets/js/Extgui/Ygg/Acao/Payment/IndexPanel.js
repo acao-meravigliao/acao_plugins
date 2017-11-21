@@ -20,18 +20,61 @@ Ext.define('Extgui.Ygg.Acao.Payment.IndexPanel', {
 
   storeConfig: {
     sorters: {
-      property: 'id',
+      property: 'created_at',
       direction: 'ASC',
     },
   },
 
   columns: [
    {
-//    xtype: 'textcolumn',
     dataIndex: 'code',
     width: 80,
     filterable: true,
     searchable: true,
+   },
+   {
+    xtype: 'stringtemplatecolumn',
+    header: 'Persona',
+    tpl: '<tpl if="person">{person.first_name} {person.last_name}</tpl>',
+    searchable: true,
+    width: 150,
+   },
+   {
+    dataIndex: 'state',
+    width: 120,
+    filterable: true,
+    searchable: true,
+   },
+   {
+    xtype: 'datecolumn',
+    dataIndex: 'created_at',
+    filterable: true,
+    width: 140,
+    format: 'Y-m-d H:i',
+   },
+   {
+    xtype: 'datecolumn',
+    dataIndex: 'expires_at',
+    filterable: true,
+    width: 140,
+    format: 'Y-m-d H:i',
+   },
+   {
+    xtype: 'datecolumn',
+    dataIndex: 'completed_at',
+    filterable: true,
+    width: 140,
+    format: 'Y-m-d H:i',
+   },
+   {
+    width: 150,
+    header: 'Totale',
+    align: 'right',
+    renderer: function(value, metaData, record, rowIndex, colIndex, store, view) {
+      var total = Big(0);
+      record.payment_services().each(function(item) { total = total.plus(item.get('price')); });
+      return total.toFixed(2) + ' €';
+    },
    },
   ],
 

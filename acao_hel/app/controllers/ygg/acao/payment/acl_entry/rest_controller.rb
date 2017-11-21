@@ -9,16 +9,10 @@
 module Ygg
 module Acao
 
-class Year < Ygg::PublicModel
-  self.table_name = 'acao_years'
+class Payment::AclEntry::RestController
+  include ActiveRest::Controller::Basic
 
-  def self.renew_for_year
-    (Time.now + 10.month).year
-  end
-
-  def self.renewal_year
-    find_by(year: renew_for_year)
-  end
+  ar_controller_for Payment::AclEntry
 end
 
 end

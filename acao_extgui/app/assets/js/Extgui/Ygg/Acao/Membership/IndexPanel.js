@@ -12,21 +12,36 @@ Ext.define('Extgui.Ygg.Acao.Membership.IndexPanel', {
   requires: [
     'Extgui.Ygg.Acao.Plugin',
     'Ygg.Acao.Membership',
+    'Extgui.Ygg.Core.Person',
   ],
 
   model: 'Ygg.Acao.Membership',
 
   storeConfig: {
     sorters: {
-      property: 'membership',
-      direction: 'ASC',
+      property: 'year',
+      direction: 'DESC',
     },
   },
 
   columns: [
    {
-    dataIndex: 'membership',
-    flex: 1,
+    xtype: 'stringtemplatecolumn',
+    tpl: '<tpl if="person">{person.first_name} {person.last_name}</tpl>',
+    dataIndex: 'person',
+    searchable: true,
+    searchIn: [ 'person.first_name', 'person.last_name' ],
+    width: 250,
+   },
+   {
+    dataIndex: 'year',
+    width: 200,
+    filterable: true,
+    searchable: true,
+   },
+   {
+    dataIndex: 'status',
+    width: 200,
     filterable: true,
     searchable: true,
    },

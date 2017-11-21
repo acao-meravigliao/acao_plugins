@@ -12,6 +12,14 @@ module Acao
 class RosterDay::RestController < Ygg::Hel::RestController
   ar_controller_for Ygg::Acao::RosterDay
 
+  capability(:anonymous,
+    allow_all_actions: true,
+    all_readable: true,
+    all_writable: false,
+    all_creatable: false,
+    recursive: true,
+  )
+
   view :_default_ do
     attribute :roster_entries do
       attribute :person do
@@ -23,6 +31,18 @@ class RosterDay::RestController < Ygg::Hel::RestController
       end
     end
   end
+
+  def ar_apply_filter(rel, filter)
+    if filter && filter[:year]
+      year = Time.new(filter.delete(:year))
+      rel = rel.where(date: (year.beginning_of_year..year.end_of_year))
+    end
+
+    rel = super(rel, filter)
+
+    rel
+  end
+
 end
 
 end

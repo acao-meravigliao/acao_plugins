@@ -11,6 +11,14 @@ module Acao
 
 class ServiceType::RestController < Ygg::Hel::RestController
   ar_controller_for Ygg::Acao::ServiceType
+
+  capability(:anonymous,
+    allow_all_actions: true,
+    all_readable: true,
+    all_writable: false,
+    all_creatable: false,
+    recursive: true,
+  )
 end
 
 end

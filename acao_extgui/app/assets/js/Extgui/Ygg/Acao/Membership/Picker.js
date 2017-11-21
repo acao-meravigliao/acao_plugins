@@ -14,7 +14,7 @@ Ext.define('Extgui.Ygg.Acao.Membership.Picker', {
     'Extgui.Ygg.Acao.Membership',
     'Extgui.Ygg.Acao.Membership.View',
   ],
-  alias: 'widget.acao_service_type_picker',
+  alias: 'widget.acao_membership_picker',
 
   extguiObject: 'Extgui.Ygg.Acao.Membership',
 

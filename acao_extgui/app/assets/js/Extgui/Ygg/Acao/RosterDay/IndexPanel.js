@@ -33,7 +33,7 @@ Ext.define('Extgui.Ygg.Acao.RosterDay.IndexPanel', {
    },
    {
     xtype: 'checkcolumn',
-    dataType: 'high_season',
+    dataIndex: 'high_season',
     width: 80,
     filterable: true,
    },
