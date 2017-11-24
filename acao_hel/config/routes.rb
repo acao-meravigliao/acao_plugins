@@ -71,6 +71,8 @@ Rails.application.routes.draw do
 
       hel_resources :person_services, controller: 'person_service/rest' do
       end
+
+      post 'password_recovery' => 'password_recovery#recover'
     end
   end
 end
