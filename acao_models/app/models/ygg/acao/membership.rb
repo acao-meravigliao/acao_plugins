@@ -153,7 +153,7 @@ class Membership < Ygg::PublicModel
 
     membership.save!
 
-    Ygg::Ml::Notifier.notify(destinations: person, template: 'MEMBERSHIP_RENEWED', template_context: {
+    Ygg::Ml::Msg.notify(destinations: person, template: 'MEMBERSHIP_RENEWED', template_context: {
       first_name: person.first_name,
       year: renewal_year.year,
       payment_expiration: payment.expires_at.strftime('%d-%m-%Y'),
@@ -165,7 +165,7 @@ class Membership < Ygg::PublicModel
   def payment_completed!
     self.status = 'COMPLETED'
 
-    Ygg::Ml::Notifier.notify(destinations: person, template: 'MEMBERSHIP_COMPLETE', template_context: {
+    Ygg::Ml::Msg.notify(destinations: person, template: 'MEMBERSHIP_COMPLETE', template_context: {
       first_name: person.first_name,
       year: year,
     }, objects: self)

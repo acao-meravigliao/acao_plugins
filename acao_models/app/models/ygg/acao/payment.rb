@@ -47,7 +47,7 @@ class Payment < Ygg::PublicModel
       membership.save!
     end
 
-    Ygg::Ml::Notifier.notify(destinations: person, template: 'PAYMENT_COMPLETED', template_context: {
+    Ygg::Ml::Msg.notify(destinations: person, template: 'PAYMENT_COMPLETED', template_context: {
       first_name: person.first_name,
       code: code,
     }, objects: self)
