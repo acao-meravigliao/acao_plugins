@@ -31,6 +31,7 @@ class Payment::RestController < Ygg::Hel::RestController
       empty!
       attribute(:first_name) { show! }
       attribute(:last_name) { show! }
+      attribute(:acao_code) { show! }
     end
 
     attribute :payment_services do
@@ -44,6 +45,11 @@ class Payment::RestController < Ygg::Hel::RestController
     self.with_perms = true
 
     attribute :payment_services do
+      show!
+
+      attribute :service_type do
+        show!
+      end
     end
 
     attribute :person do

@@ -15,3 +15,13 @@
   font-family: monospace;
   font-weight: bold;
 }
+
+td.price div {
+  text-align: right;
+  font-family: monospace;
+}
+
+input.price {
+  text-align: right;
+  font-family: monospace;
+}
