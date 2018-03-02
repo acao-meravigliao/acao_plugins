@@ -8,7 +8,7 @@ class Volo < ActiveRecord::Base
 
   self.table_name = :voli
 
-
+  extend Ygg::Acao::MainDb::LastUpdateTracker
 end
 
 end

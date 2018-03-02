@@ -12,6 +12,8 @@ class SocioIscritto < ActiveRecord::Base
              :class_name => '::Ygg::Acao::MainDb::Socio',
              :primary_key => 'codice_socio_dati_generale',
              :foreign_key => 'codice_iscritto'
+
+  extend Ygg::Acao::MainDb::LastUpdateTracker
 end
 
 end
