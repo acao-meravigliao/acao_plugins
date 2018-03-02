@@ -113,6 +113,69 @@ class Payment < Ygg::PublicModel
     belongs_to :service_type,
                class_name: 'Ygg::Acao::ServiceType'
   end
+
+  def build_receipt
+    ric_fisc = XMLInterface::RicFisc.new do |ric_fisc|
+      ric_fisc.cod_schema = 'RICFISC1'
+      ric_fisc.data_ora_creazione = Time.now
+      ric_fisc.docus[0] = XMLInterface::RicFisc::Docu.new do |docu|
+        docu.testa = XMLInterface::RicFisc::Docu::Testa.new do |testa|
+          testa.abbuono = nil
+          testa.acconto = nil
+          testa.acconto_in_cassa = true
+          testa.calcoli_su_imponibile = false
+          testa.cod_divisa = 'EUR'
+          testa.cod_pagamento = 'CART'
+          testa.contrassegno = nil
+          testa.nostro_rif = code
+          testa.dati_controparte = XMLInterface::RicFisc::Docu::Testa::DatiControparte.new
+          testa.dati_controparte.citta = person.residence_location.city
+          testa.dati_controparte.codice_fiscale = person.italian_fiscal_code
+          testa.dati_controparte.e_mail = person.contacts.where(type: 'email').first.value
+          testa.dati_controparte.indirizzo = person.residence_location.full_address
+          testa.dati_controparte.partita_iva = person.vat_number
+          testa.dati_controparte.ragione_sociale = person.name
+        end
+
+        docu.righe = XMLInterface::RicFisc::Docu::Righe.new do |righe|
+          righe.righe[0] = XMLInterface::RicFisc::Docu::Righe::Riga.new do |riga|
+            riga.cod_art = 'CONS'
+            riga.cod_iva = 22
+            riga.cod_un_mis = 'Nr'
+            riga.descrizione = 'Pippo'
+            riga.imponibile = '123.5'
+            riga.importo_sconto = '0'
+            riga.imposta = '30'
+            riga.perc_sconto1 = 0
+            riga.perc_sconto2 = 0
+            riga.perc_sconto3 = 0
+            riga.perc_sconto4 = 0
+            riga.qta = 1
+            riga.tipo_riga = 2
+            riga.totale = 150
+            riga.valore_unitario = 150
+          end
+        end
+      end
+    end
+
+    noko = Nokogiri::XML::Document.new
+    noko.encoding = 'UTF-8'
+    noko.root = ric_fisc.to_xml
+
+    noko
+  end
+
+  def export_receipt!
+    filename = File.join(Rails.application.config.acao.onda_import_dir, "#{code}.xml")
+    filename_new = filename + '.new'
+
+    File.open(filename_new , 'w') do |file|
+      file.write(build_receipt)
+    end
+
+    File.rename(filename_new, filename)
+  end
 end
 
 end

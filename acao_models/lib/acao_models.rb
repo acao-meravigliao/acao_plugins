@@ -12,6 +12,10 @@ module Ygg
 module Acao
 
 class ModelsEngine < Rails::Engine
+  config.acao = ActiveSupport::OrderedOptions.new if !defined? config.acao
+  config.acao.soci_ml_dry_run = true
+  config.acao.onda_import_dir = '/opt/onda_export/onda_import'
+
   config.to_prepare do
     Ygg::Core::Person.class_eval do
 #      has_one :acao_pilot,
