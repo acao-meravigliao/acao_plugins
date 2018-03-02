@@ -16,7 +16,8 @@ class Meter < Ygg::PublicModel
              class_name: '::Ygg::Acao::MeterBus'
 
   belongs_to :person,
-             class_name: '::Ygg::Core::Person'
+             class_name: '::Ygg::Core::Person',
+             optional: true
 
 end
 

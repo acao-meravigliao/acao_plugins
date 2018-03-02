@@ -17,7 +17,8 @@ class Membership < Ygg::PublicModel
              class_name: '::Ygg::Core::Person'
 
   belongs_to :payment,
-             class_name: 'Ygg::Acao::Payment'
+             class_name: 'Ygg::Acao::Payment',
+             optional: true
 
   include Ygg::Core::Loggable
   define_default_log_controller(self)

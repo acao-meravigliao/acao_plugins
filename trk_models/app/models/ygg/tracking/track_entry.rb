@@ -14,7 +14,8 @@ class TrackEntry < ActiveRecord::Base
   self.table_name = 'trk_track_entries'
 
   belongs_to :aircraft,
-             :class_name => 'Ygg::Acao::Aircraft'
+             :class_name => 'Ygg::Acao::Aircraft',
+             optional: true
 end
 
 end

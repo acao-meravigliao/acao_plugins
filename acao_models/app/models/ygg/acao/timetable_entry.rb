@@ -16,25 +16,33 @@ class TimetableEntry < Ygg::PublicModel
              class_name: '::Ygg::Acao::Aircraft'
 
   belongs_to :pilot,
-             class_name: '::Ygg::Core::Person'
+             class_name: '::Ygg::Core::Person',
+             optional: true
 
   belongs_to :towed_by,
-             class_name: '::Ygg::Acao::TimetableEntry'
+             class_name: '::Ygg::Acao::TimetableEntry',
+             optional: true
 
   belongs_to :takeoff_location,
-             class_name: '::Ygg::Core::Location'
+             class_name: '::Ygg::Core::Location',
+             optional: true
 
   belongs_to :landing_location,
-             class_name: '::Ygg::Core::Location'
+             class_name: '::Ygg::Core::Location',
+             optional: true
 
   belongs_to :takeoff_airfield,
-             class_name: '::Ygg::Acao::Airfield'
+             class_name: '::Ygg::Acao::Airfield',
+             optional: true
 
   belongs_to :landing_airfield,
-             class_name: '::Ygg::Acao::Airfield'
+             class_name: '::Ygg::Acao::Airfield',
+             optional: true
 
   belongs_to :tow_release_location,
-             class_name: '::Ygg::Core::Location'
+             class_name: '::Ygg::Core::Location',
+             optional: true
+
 end
 
 end

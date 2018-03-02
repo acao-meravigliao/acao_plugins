@@ -14,7 +14,8 @@ class Tracker < Ygg::PublicModel
   self.inheritance_column = false
 
   belongs_to :aircraft,
-             class_name: 'Ygg::Acao::Aircraft'
+             class_name: 'Ygg::Acao::Aircraft',
+             optional: true
 
 end
 

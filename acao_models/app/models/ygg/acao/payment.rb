@@ -17,7 +17,9 @@ class Payment < Ygg::PublicModel
 
   has_many :payment_services,
            class_name: 'Ygg::Acao::Payment::Service',
-           embedded: true
+           embedded: true,
+           autosave: true,
+           dependent: :destroy
 
   has_one :membership,
           class_name: 'Ygg::Acao::Membership'
@@ -53,6 +55,50 @@ class Payment < Ygg::PublicModel
     }, objects: self)
 
     save!
+  end
+
+
+  def self.run_chores!
+    all.each do |payment|
+      payment.run_chores!
+    end
+  end
+
+  def run_chores!
+    transaction do
+      now = Time.now
+      last_run = last_chore || Time.new(0)
+
+      run_expiration_chores(now: now, last_run: last_run)
+
+      self.last_chore = now
+
+      save!
+    end
+  end
+
+  def run_expiration_chores(now:, last_run:)
+    when_in_advance = 5.days - 10.hours
+
+    if expires_at && state == 'PENDING'
+      if (expires_at.beginning_of_day - when_in_advance).between?(last_run, now) && !expires_at.between?(last_run, now)
+        Ygg::Ml::Msg.notify(destinations: person, template: 'PAYMENT_NEAR_EXPIRATION', template_context: {
+          first_name: person.first_name,
+          code: code,
+          created_at: created_at.strftime('%Y-%m-%d'),
+          expires_at: expires_at.strftime('%Y-%m-%d'),
+        })
+      end
+
+      if expires_at.between?(last_run, now)
+        Ygg::Ml::Msg.notify(destinations: person, template: 'PAYMENT_EXPIRED', template_context: {
+          first_name: person.first_name,
+          code: code,
+          created_at: created_at.strftime('%Y-%m-%d'),
+          expires_at: expires_at.strftime('%Y-%m-%d'),
+        })
+      end
+    end
   end
 
   class Service < Ygg::BasicModel
