@@ -48,6 +48,12 @@ Rails.application.routes.draw do
         end
       end
 
+      hel_resources :licenses, controller: 'license/rest' do
+      end
+
+      hel_resources :medicals, controller: 'medical/rest' do
+      end
+
       hel_resources :service_types, controller: 'service_type/rest' do
       end
 

@@ -31,6 +31,18 @@ class ExtguiEngine < Rails::Engine
           uri: 'model/ygg/acao/memberships/',
         }
       },
+      licenses: {
+        _node_: {
+          text: 'Licenze',
+          uri: 'model/ygg/acao/licenses/',
+        }
+      },
+      medicals: {
+        _node_: {
+          text: 'Visite Mediche',
+          uri: 'model/ygg/acao/medicals/',
+        }
+      },
       payments: {
         _node_: {
           text: 'Payments',
@@ -73,21 +85,15 @@ class ExtguiEngine < Rails::Engine
           uri: 'model/ygg/acao/aircrafts/',
         }
       },
-      aircraft_types: {
-        _node_: {
-          text: 'Aircraft Types',
-          uri: 'model/ygg/acao/aircraft_types/',
-        }
-      },
-      trackers: {
-        _node_: {
-          text: 'Trackers',
-          uri: 'model/ygg/acao/trackers/',
-        }
-      },
       setup: {
         _node_: {
           text: 'Setup',
+        },
+        aircraft_types: {
+          _node_: {
+            text: 'Aircraft Types',
+            uri: 'model/ygg/acao/aircraft_types/',
+          }
         },
         airfields: {
           _node_: {
@@ -111,6 +117,12 @@ class ExtguiEngine < Rails::Engine
           _node_: {
             text: 'Years',
             uri: 'model/ygg/acao/years/',
+          }
+        },
+        trackers: {
+          _node_: {
+            text: 'Trackers',
+            uri: 'model/ygg/acao/trackers/',
           }
         },
       },
