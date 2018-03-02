@@ -12,8 +12,8 @@ Ext.define('Extgui.Ygg.Acao.RosterEntry.ObjectPanel', {
   requires: [
     'Extgui.Ygg.Acao.Plugin',
     'Extgui.form.field.DecimalNumber',
-    'Extgui.form.field.DateTime',
     'Extgui.Ygg.Acao.RosterEntry',
+    'Extgui.Ygg.Acao.RosterDay.ReferenceField',
     'Extgui.Ygg.Core.Person.ReferenceField',
   ],
 
@@ -27,8 +27,8 @@ Ext.define('Extgui.Ygg.Acao.RosterEntry.ObjectPanel', {
     layout: 'anchor',
     items: [
      {
-      xtype: 'datefield',
-      name: 'date',
+      xtype: 'acao_roster_day',
+      name: 'roster_day',
      },
      {
       xtype: 'core_person',

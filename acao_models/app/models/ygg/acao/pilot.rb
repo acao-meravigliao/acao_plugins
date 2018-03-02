@@ -319,6 +319,16 @@ class Pilot < Ygg::Core::Person
   end
 
 
+  def acao_send_initial_password
+    credential = credentials.where('fqda LIKE \'%@cp.acao.it\'').first
+
+    return if !credential
+
+    Ygg::Ml::Msg.notify(destinations: self, template: 'SEND_INITIAL_PASSWORD', template_context: {
+      first_name: first_name,
+      password: credential.password,
+     }, objects: self)
+  end
 
   def send_welcome_message!
     return if acao_sleeping

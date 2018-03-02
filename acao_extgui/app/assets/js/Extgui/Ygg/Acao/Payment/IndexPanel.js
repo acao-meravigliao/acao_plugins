@@ -21,7 +21,7 @@ Ext.define('Extgui.Ygg.Acao.Payment.IndexPanel', {
   storeConfig: {
     sorters: {
       property: 'created_at',
-      direction: 'ASC',
+      direction: 'DESC',
     },
   },
 

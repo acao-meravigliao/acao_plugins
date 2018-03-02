@@ -16,6 +16,6 @@ Ext.define('Extgui.Ygg.Acao.RosterDay', {
   singleton: true,
 
   subTpl: [
-    '<span class="name">{date}</span>',
+    '<span class="name">{date:date(\'Y-m-d\')}</span><br />{descr}',
   ],
 });

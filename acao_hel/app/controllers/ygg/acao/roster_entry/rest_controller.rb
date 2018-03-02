@@ -21,6 +21,35 @@ class RosterEntry::RestController < Ygg::Hel::RestController
     recursive: true,
   )
 
+  view :grid do
+    empty!
+
+    attribute(:id) { show! }
+    attribute(:uuid) { show! }
+    attribute(:chief) { show! }
+
+    attribute :roster_day do
+      show!
+    end
+
+    attribute :person do
+      show!
+      empty!
+      attribute(:first_name) { show! }
+      attribute(:last_name) { show! }
+    end
+  end
+
+  view :edit do
+    attribute :roster_day do
+      show!
+    end
+
+    attribute :person do
+      show!
+    end
+  end
+
   def ar_apply_filter(rel, filter)
     if filter['today']
       (attr, path) = rel.nested_attribute('roster_day.date')

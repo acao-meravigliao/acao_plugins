@@ -12,6 +12,7 @@ Ext.define('Extgui.Ygg.Acao.RosterDay.IndexPanel', {
   requires: [
     'Extgui.Ygg.Acao.Plugin',
     'Ygg.Acao.RosterDay',
+    'Ext.grid.column.CheckColumn',
   ],
 
 //  title: 'Acao Service Types',
