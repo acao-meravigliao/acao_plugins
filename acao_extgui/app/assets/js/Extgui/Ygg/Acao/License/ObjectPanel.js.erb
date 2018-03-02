@@ -1,0 +1,69 @@
+/*
+ * Copyright (C) 2017-2018, Daniele Orlandi
+ *
+ * Author:: Daniele Orlandi <daniele@orlandi.com>
+ *
+ * License:: You can redistribute it and/or modify it under the terms of the LICENSE file.
+ *
+ */
+
+Ext.define('Extgui.Ygg.Acao.License.ObjectPanel', {
+  extend: 'Extgui.object.panel.Base',
+  requires: [
+    'Extgui.Ygg.Acao.Plugin',
+    'Extgui.form.field.DateTime',
+    'Extgui.Ygg.Acao.License',
+    'Extgui.Ygg.Acao.License.Rating.CollectionField',
+  ],
+
+  extguiObject: 'Extgui.Ygg.Acao.License',
+
+  tabs: [
+   {
+    xtype: 'panel',
+    title: i18n('extgui.ygg.acao.license.object_panel.object_tab'),
+    padding: 10,
+    layout: 'anchor',
+    items: [
+     {
+      xtype: 'textfield',
+      name: 'identifier',
+     },
+     {
+      xtype: 'combobox',
+      name: 'type',
+      width: 370,
+      queryMode: 'local',
+      editable: true,
+      value: null,
+      store: [
+       [ 'GPL' ],
+       [ 'PPL' ],
+       [ 'SPL' ],
+      ],
+     },
+     {
+      xtype: 'datetimefield',
+      name: 'issued_at',
+     },
+     {
+      xtype: 'datetimefield',
+      name: 'valid_to',
+     },
+     {
+      xtype: 'datetimefield',
+      name: 'valid_to2',
+     },
+     {
+      xtype: 'acao_license_ratings',
+      name: 'ratings',
+     },
+    ],
+   },
+  ],
+
+  nav: [
+  ],
+
+  reports: [],
+});

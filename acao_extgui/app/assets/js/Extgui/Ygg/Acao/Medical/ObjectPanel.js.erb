@@ -1,0 +1,59 @@
+/*
+ * Copyright (C) 2017-2017, Daniele Orlandi
+ *
+ * Author:: Daniele Orlandi <daniele@orlandi.com>
+ *
+ * License:: You can redistribute it and/or modify it under the terms of the LICENSE file.
+ *
+ */
+
+Ext.define('Extgui.Ygg.Acao.Medical.ObjectPanel', {
+  extend: 'Extgui.object.panel.Base',
+  requires: [
+    'Extgui.Ygg.Acao.Plugin',
+    'Extgui.form.field.DateTime',
+    'Extgui.Ygg.Acao.Medical',
+  ],
+
+  extguiObject: 'Extgui.Ygg.Acao.Medical',
+
+  tabs: [
+   {
+    xtype: 'panel',
+    title: i18n('extgui.ygg.acao.medical.object_panel.object_tab'),
+    padding: 10,
+    layout: 'anchor',
+    items: [
+     {
+      xtype: 'textfield',
+      name: 'identifier',
+     },
+     {
+      xtype: 'combobox',
+      name: 'type',
+      width: 370,
+      queryMode: 'local',
+      editable: true,
+      value: null,
+      store: [
+       [ 'IT class 1' ],
+       [ 'IT class 2' ],
+      ],
+     },
+     {
+      xtype: 'datetimefield',
+      name: 'issued_at',
+     },
+     {
+      xtype: 'datetimefield',
+      name: 'valid_to',
+     },
+    ],
+   },
+  ],
+
+  nav: [
+  ],
+
+  reports: [],
+});
