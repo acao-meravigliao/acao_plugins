@@ -348,6 +348,14 @@ class Pilot < Ygg::Core::Person
     where.not('acao_sleeping').each do |person|
       person.run_chores!
     end
+
+    transaction do
+      sync_ml_voting_members!
+    end
+
+    transaction do
+      sync_soci_ml!
+    end
   end
 
   def run_chores!
@@ -488,7 +496,9 @@ class Pilot < Ygg::Core::Person
     end
   end
 
-  def self.sync_ml_voting_members(time: Time.now)
+  def self.voting_members(time: Time.now)
+    # Exclude students
+
     years = [ time.year ]
 
     # Consider members active up to 31-1 of the year
@@ -499,13 +509,32 @@ class Pilot < Ygg::Core::Person
     members = Ygg::Acao::Pilot.joins(:acao_memberships).where.not('acao_sleeping').
                 where('acao_memberships.year': years).group('core_people.id').order(id: :asc)
 
-    list = Ygg::Ml::List.find_by!(symbol: 'VOTING_MEMBERS')
+    members
+  end
+
+  def self.active_members(time: Time.now)
+    years = [ time.year ]
+
+    # Consider members active up to 31-1 of the year
+    if (Time.now.beginning_of_year - Time.now) < 31.days
+      years << [ time.year - 1 ]
+    end
+
+    members = Ygg::Acao::Pilot.joins(:acao_memberships).where.not('acao_sleeping').
+                where('acao_memberships.year': years).group('core_people.id').order(id: :asc)
+
+    members
+  end
+
+  def self.sync_ml_active_members!(time: Time.now)
+    members = voting_members
+
+    list = Ygg::Ml::List.find_by!(symbol: 'ACTIVE_MEMBERS')
     current_members = list.members.where(owner_type: 'Ygg::Core::Person').order(owner_id: :asc)
 
     merge(l: members, r: current_members,
       l_cmp_r: lambda { |l,r| l.id <=> r.owner_id },
       l_to_r: lambda { |l|
-puts "L_TO_R #{l}"
         contact = l.contacts.where(type: 'email').first
 
         if contact
@@ -521,23 +550,54 @@ puts "L_TO_R #{l}"
         end
       },
       r_to_l: lambda { |r|
-puts "R_TO_L #{r}"
         r.destroy
       },
       lr_update: lambda { |l,r|
-puts "L_R_UPDATE #{l} #{r}"
         r.address.name = l.name
         r.address.save!
       },
     )
   end
 
-  def self.sync_soci_ml!(dry_run: false)
+  def self.sync_ml_voting_members!(time: Time.now)
+    members = voting_members
 
-    l_full_emails = Hash[Ygg::Ml::List.find_by!(symbol: 'VOTING_MEMBERS').addresses.
+    list = Ygg::Ml::List.find_by!(symbol: 'VOTING_MEMBERS')
+    current_members = list.members.where(owner_type: 'Ygg::Core::Person').order(owner_id: :asc)
+
+    merge(l: members, r: current_members,
+      l_cmp_r: lambda { |l,r| l.id <=> r.owner_id },
+      l_to_r: lambda { |l|
+        contact = l.contacts.where(type: 'email').first
+
+        if contact
+          addr = Ygg::Ml::Address.find_or_create_by(addr: contact.value, addr_type: 'EMAIL')
+          addr.name = l.name
+          addr.save!
+
+          list.members << Ygg::Ml::List::Member.new(
+            address: addr,
+            subscribed_on: Time.now,
+            owner: l,
+          )
+        end
+      },
+      r_to_l: lambda { |r|
+        r.destroy
+      },
+      lr_update: lambda { |l,r|
+        r.address.name = l.name
+        r.address.save!
+      },
+    )
+  end
+
+  def self.sync_soci_ml!(dry_run: Rails.application.config.acao.soci_ml_dry_run)
+
+    l_full_emails = Hash[Ygg::Ml::List.find_by!(symbol: 'ACTIVE_MEMBERS').addresses.
                      where(addr_type: 'EMAIL').order(addr: :asc).map { |x| [ x.addr, x.name ] }]
 
-    l_emails = l_full_emails.keys
+    l_emails = l_full_emails.keys.sort
     r_emails = []
 
     IO::popen([ '/usr/bin/ssh', '-i', '/var/lib/yggdra/lino', 'root@lists.acao.it', '/usr/sbin/list_members', 'soci' ]) do |io|
@@ -548,7 +608,7 @@ puts "L_R_UPDATE #{l} #{r}"
         raise "Cannot list list members"
       end
 
-      r_emails = data.split("\n").map { |x| x.strip.downcase }.sort!
+      r_emails = data.split("\n").map { |x| x.strip.downcase }.sort
     end
 
     members_to_add = []
@@ -590,8 +650,6 @@ puts "L_R_UPDATE #{l} #{r}"
       end
     end
   end
-
-
 end
 
 end
