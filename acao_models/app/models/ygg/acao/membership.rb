@@ -88,14 +88,8 @@ class Membership < Ygg::PublicModel
 
     renewal_year = Ygg::Acao::Year.renewal_year
 
-    code = Password.random(4, symbols: 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789')
-    loop do
-      break if !Ygg::Acao::Payment.find_by_code(code)
-    end
-
     payment = Ygg::Acao::Payment.create(
       person: person,
-      code: code,
       created_at: Time.now,
       expires_at: Time.now + 10.days,
       payment_method: payment_method,
@@ -170,6 +164,13 @@ class Membership < Ygg::PublicModel
       first_name: person.first_name,
       year: year,
     }, objects: self)
+  end
+
+  def active?(time: Time.now)
+    ym = Ygg::Acao::Year.find_by(year: year)
+    return false if !ym
+
+    time.between?(ym.renew_opening_time, ym.ending_time)
   end
 
 end

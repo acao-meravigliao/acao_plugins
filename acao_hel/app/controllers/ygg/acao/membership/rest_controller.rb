@@ -54,15 +54,20 @@ class Membership::RestController < Ygg::Hel::RestController
     person = aaa_context.auth_person
     renewal_year = Ygg::Acao::Year.renewal_year
 
-    if !renewal_year || !renewal_year.renew_opening_time
+    if !renewal_year || !renewal_year.renew_opening_time || !renewal_year.renew_announce_time
       render(json: {
+        announce_time: nil,
         opening_time: nil,
       })
 
       return
     end
 
-    membership = person.acao_memberships.find_by(year: renewal_year.year)
+    # They may be more than one since each year covers some of the adjacent years
+    active_memberships = person.acao_memberships.order(year: :asc).to_a.select(&:active?)
+
+    membership = active_memberships.last
+
     context = Ygg::Acao::Membership.determine_base_context(person: person, year: renewal_year)
 
 #    # We use #to_f because the frontend does not (yet?) have a arbitrary precision support
@@ -82,6 +87,7 @@ class Membership::RestController < Ygg::Hel::RestController
 
     render(json: context.merge({
       renew_for_year: renewal_year.year,
+      announce_time: renewal_year.renew_announce_time,
       opening_time: renewal_year.renew_opening_time,
       membership: membership_data,
     }))
