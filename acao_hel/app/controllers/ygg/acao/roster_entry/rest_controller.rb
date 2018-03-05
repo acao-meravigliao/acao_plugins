@@ -62,19 +62,6 @@ class RosterEntry::RestController < Ygg::Hel::RestController
     rel
   end
 
-  def compute_completed_years(from, to)
-    # Number of completed years is not trivial :)
-
-    completed_years = to.year - from.year
-
-    if from.month > to.month ||
-       (from.month == to.month && from.day > to.day)
-      completed_years -= 1
-    end
-
-    completed_years
-  end
-
   def get_status
     person = aaa_context.auth_person
 
@@ -102,48 +89,15 @@ class RosterEntry::RestController < Ygg::Hel::RestController
 
     if membership && (membership.status == 'COMPLETED' || membership.status == 'WAITING_PAYMENT')
       can_select_entries = true
-
-      roster_entries = person.acao_roster_entries.joins(:roster_day).where('acao_roster_days.date': (
-        DateTime.new(renewal_year.year).beginning_of_year..
-        DateTime.new(renewal_year.year).end_of_year
-      ))
-
-      roster_entries_high = roster_entries.where('acao_roster_days.high_season')
-
-      ren_time = Ygg::Acao::Year.renewal_year.renew_opening_time
-
-      if person.birth_date
-        age_on_renewal_day = compute_completed_years(person.birth_date, ren_time)
-
-        if age_on_renewal_day >= 65
-          needed_total = 0
-          needed_high_season = 0
-        elsif membership.board_member
-          needed_total = 1
-          needed_high_season = 0
-        elsif membership.tug_pilot
-          needed_total = 1
-          needed_high_season = 0
-        elsif membership.instructor
-          needed_total = 0
-          needed_high_season = 0
-        else
-          needed_total = 2
-          needed_high_season = 1
-        end
-      else
-        needed_total = 2
-        needed_high_season = 1
-      end
-
-      needed_entries_present = roster_entries.count >= needed_total && roster_entries_high.count >= needed_high_season
+      roster_entries_needed = person.roster_entries_needed(year: renewal_year.year)
+      needed_entries_present = person.roster_needed_entries_present(year: renewal_year.year)
     end
 
     ar_respond_with({
       renew_for_year: renewal_year.year,
       needed_entries_present: needed_entries_present,
-      needed_total: needed_total,
-      needed_high_season: needed_high_season,
+      needed_total: roster_entries_needed[:total],
+      needed_high_season: roster_entries_needed[:high_season],
       can_select_entries: can_select_entries,
       possible_roster_chief: membership ? membership.possible_roster_chief : false,
     })
