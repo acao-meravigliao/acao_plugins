@@ -31,6 +31,17 @@ class Payment < Ygg::PublicModel
 
   include Ygg::Core::Notifiable
 
+  after_initialize do
+    if new_record?
+      loop do
+        code = "A-" + Password.random(4, symbols: 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789')
+        break if !self.class.find_by_code(code)
+      end
+
+      self.code = code
+    end
+  end
+
   def set_default_acl
     transaction do
       acl_entries.where(owner: self).destroy_all
@@ -115,46 +126,136 @@ class Payment < Ygg::PublicModel
   end
 
   def build_receipt
+    totale_imponibile = 1234
+    totale_imposta = 222
+    totale = totale_imponibile + totale_imposta
+
     ric_fisc = XMLInterface::RicFisc.new do |ric_fisc|
       ric_fisc.cod_schema = 'RICFISC1'
       ric_fisc.data_ora_creazione = Time.now
       ric_fisc.docus[0] = XMLInterface::RicFisc::Docu.new do |docu|
         docu.testa = XMLInterface::RicFisc::Docu::Testa.new do |testa|
-          testa.abbuono = nil
-          testa.acconto = nil
+          testa.abbuono = 0
+          testa.acconto = 0
           testa.acconto_in_cassa = true
           testa.calcoli_su_imponibile = false
           testa.cod_divisa = 'EUR'
-          testa.cod_pagamento = 'CART'
-          testa.contrassegno = nil
+          testa.cod_pagamento = 'BB'
+          testa.contrassegno = 0
           testa.nostro_rif = code
+          testa.tot_documento = 0#totale
+          testa.tot_imponibile = 0#totale_imponibile
+          testa.tot_imposta = 0#totale_imposta
+          testa.vostro_rif = code
           testa.dati_controparte = XMLInterface::RicFisc::Docu::Testa::DatiControparte.new
           testa.dati_controparte.citta = person.residence_location.city
           testa.dati_controparte.codice_fiscale = person.italian_fiscal_code
           testa.dati_controparte.e_mail = person.contacts.where(type: 'email').first.value
           testa.dati_controparte.indirizzo = person.residence_location.full_address
-          testa.dati_controparte.partita_iva = person.vat_number
+          testa.dati_controparte.partita_iva = person.vat_number || ''
           testa.dati_controparte.ragione_sociale = person.name
         end
 
         docu.righe = XMLInterface::RicFisc::Docu::Righe.new do |righe|
-          righe.righe[0] = XMLInterface::RicFisc::Docu::Righe::Riga.new do |riga|
-            riga.cod_art = 'CONS'
-            riga.cod_iva = 22
-            riga.cod_un_mis = 'Nr'
-            riga.descrizione = 'Pippo'
-            riga.imponibile = '123.5'
-            riga.importo_sconto = '0'
-            riga.imposta = '30'
+          righe.righe << XMLInterface::RicFisc::Docu::Righe::Riga.new do |riga|
+            riga.cod_art = '0010S'
+            riga.cod_iva = ''
+            riga.cod_un_mis = 'NR.'
+            riga.descrizione = ''
+            riga.imponibile = ''
+            riga.importo_sconto = 0
+            riga.imposta = ''
             riga.perc_sconto1 = 0
             riga.perc_sconto2 = 0
             riga.perc_sconto3 = 0
             riga.perc_sconto4 = 0
-            riga.qta = 1
+            riga.qta = 20
             riga.tipo_riga = 2
-            riga.totale = 150
-            riga.valore_unitario = 150
+            riga.totale = ''
+            riga.valore_unitario = ''
+
+            riga.dati_art_serv = XMLInterface::RicFisc::Docu::Righe::Riga::DatiArtServ.new do |dati_art_serv|
+              dati_art_serv.cod_art = '0010S'
+              dati_art_serv.cod_un_mis_base = 'NR.'
+              dati_art_serv.descrizione = ''
+              dati_art_serv.tipo_articolo = 2
+            end
           end
+
+          righe.righe << XMLInterface::RicFisc::Docu::Righe::Riga.new do |riga|
+            riga.cod_art = ''
+            riga.cod_iva = ''
+            riga.cod_un_mis = ''
+            riga.descrizione = "Acquisto online, codice pagamento #{code}"
+            riga.imponibile = ''
+            riga.importo_sconto = 0
+            riga.imposta = ''
+            riga.perc_sconto1 = 0
+            riga.perc_sconto2 = 0
+            riga.perc_sconto3 = 0
+            riga.perc_sconto4 = 0
+            riga.qta = 0
+            riga.tipo_riga = 3
+            riga.totale = ''
+            riga.valore_unitario = ''
+
+            riga.dati_art_serv = XMLInterface::RicFisc::Docu::Righe::Riga::DatiArtServ.new do |dati_art_serv|
+              dati_art_serv.cod_art = '0010S'
+              dati_art_serv.cod_un_mis_base = 'NR.'
+              dati_art_serv.descrizione = ''
+              dati_art_serv.tipo_articolo = 2
+            end
+          end
+        end
+
+        docu.coda = XMLInterface::RicFisc::Docu::Coda.new do |coda|
+          coda.aliquota1 = 0
+          coda.aliquota2 = 0
+          coda.aliquota3 = 0
+          coda.aliquota4 = 0
+          coda.aliquota5 = 0
+          coda.castelletto_manuale = false
+          coda.causale_trasporto = ''
+          coda.cod_iva1 = 0
+          coda.cod_iva2 = 0
+          coda.cod_iva3 = 0
+          coda.cod_iva4 = 0
+          coda.cod_iva5 = 0
+          coda.cod_trasporto = 0
+          coda.id_indirizzo_fattura = 0
+          coda.id_indirizzo_merce = 0
+          coda.id_vettore1 = 0
+          coda.imponibile1 = 0
+          coda.imponibile2 = 0
+          coda.imponibile3 = 0
+          coda.imponibile4 = 0
+          coda.imponibile5 = 0
+          coda.imponibile_vb1 = 0
+          coda.imponibile_vb2 = 0
+          coda.imponibile_vb3 = 0
+          coda.imponibile_vb4 = 0
+          coda.imponibile_vb5 = 0
+          coda.importo_sconto = 0
+          coda.imposta1 = 0
+          coda.imposta2 = 0
+          coda.imposta3 = 0
+          coda.imposta4 = 0
+          coda.imposta5 = 0
+          coda.imposta_vb1 = 0
+          coda.imposta_vb2 = 0
+          coda.imposta_vb3 = 0
+          coda.imposta_vb4 = 0
+          coda.imposta_vb5 = 0
+          coda.totale1 = 0
+          coda.totale2 = 0
+          coda.totale3 = 0
+          coda.totale4 = 0
+          coda.totale5 = 0
+          coda.totale_vb1 = 0
+          coda.totale_vb2 = 0
+          coda.totale_vb3 = 0
+          coda.totale_vb4 = 0
+          coda.totale_vb5 = 0
         end
       end
     end
@@ -167,7 +268,7 @@ class Payment < Ygg::PublicModel
   end
 
   def export_receipt!
-    filename = File.join(Rails.application.config.acao.onda_import_dir, "#{code}.xml")
+    filename = File.join(Rails.application.config.acao.onda_import_dir, "#{Time.now.strftime('%Y%m%d_%H%M%S')}_#{code}.xml")
     filename_new = filename + '.new'
 
     File.open(filename_new , 'w') do |file|

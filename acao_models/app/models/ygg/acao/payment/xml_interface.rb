@@ -65,6 +65,15 @@ class Payment::XMLInterface
         class Riga < Base
           xml_name 'Riga'
 
+          class DatiArtServ < Base
+            xml_name 'DatiArtServ'
+
+            xml_accessor :cod_art, from: 'CodArt'
+            xml_accessor :cod_un_mis_base, from: 'CodUnMisBase'
+            xml_accessor :descrizione, from: 'Descrizione'
+            xml_accessor :tipo_articolo, from: 'TipoArticolo'
+          end
+
           xml_accessor :cod_art, from: 'CodArt'
           xml_accessor :cod_iva, from: 'CodIva'
           xml_accessor :cod_un_mis, from: 'CodUnMis'
@@ -80,6 +89,8 @@ class Payment::XMLInterface
           xml_accessor :tipo_riga, from: 'TipoRiga'
           xml_accessor :totale, from: 'Totale'
           xml_accessor :valore_unitario, from: 'ValoreUnitario'
+
+          xml_accessor :dati_art_serv, as: DatiArtServ
         end
 
         xml_accessor :righe, as: [ Riga ]
