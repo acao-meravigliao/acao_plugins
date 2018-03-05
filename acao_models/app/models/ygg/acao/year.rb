@@ -19,6 +19,16 @@ class Year < Ygg::PublicModel
   def self.renewal_year
     find_by(year: renew_for_year)
   end
+
+  def beginning_time
+    # The membership year starts from the day the renewals are open
+    renew_for_year
+  end
+
+  def ending_time
+    # The membership year ends on 31st January of the next year
+    Time.new(year).end_of_year + 31.days
+  end
 end
 
 end
