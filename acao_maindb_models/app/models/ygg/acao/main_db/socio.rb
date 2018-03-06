@@ -28,6 +28,21 @@ class Socio < ActiveRecord::Base
            primary_key: 'codice_socio_dati_generale',
            foreign_key: 'codice_socio'
 
+  has_many :log_bar2,
+           class_name: '::Ygg::Acao::MainDb::LogBar2',
+           primary_key: 'codice_socio_dati_generale',
+           foreign_key: 'codice_socio'
+
+  has_many :cassetta_bar_locale,
+           class_name: '::Ygg::Acao::MainDb::CassettaBarLocale',
+           primary_key: 'codice_socio_dati_generale',
+           foreign_key: 'codice'
+
+  has_many :log_bollini,
+           class_name: '::Ygg::Acao::MainDb::LogBollini',
+           primary_key: 'codice_socio_dati_generale',
+           foreign_key: 'codice_pilota'
+
   extend Ygg::Acao::MainDb::LastUpdateTracker
 end
 
