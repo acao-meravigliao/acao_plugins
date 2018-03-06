@@ -13,8 +13,7 @@ class BarTransaction < Ygg::PublicModel
   self.table_name = 'acao_bar_transactions'
 
   belongs_to :person,
-             class_name: '::Ygg::Core::Person',
-             optional: true
+             class_name: '::Ygg::Core::Person'
 
   include Ygg::Core::Loggable
   define_default_log_controller(self)
