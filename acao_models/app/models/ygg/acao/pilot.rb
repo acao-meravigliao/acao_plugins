@@ -30,6 +30,10 @@ class Pilot < Ygg::Core::Person
            class_name: '::Ygg::Acao::BarTransaction',
            foreign_key: 'person_id'
 
+  has_many :acao_token_transactions,
+           class_name: '::Ygg::Acao::TokenTransaction',
+           foreign_key: 'person_id'
+
   def self.active_members(time: Time.now)
     years = [ time.year ]
 
@@ -297,32 +301,51 @@ class Pilot < Ygg::Core::Person
     end
   end
 
+  def check_bar_transactions
+    xacts = acao_bar_transactions.order(recorded_at: :asc, old_id: :asc, old_cassetta_id: :asc)
+
+    cur = xacts.first.credit || 0
+
+    xacts.each do |xact|
+      #puts "%-10s prev=%7.2f + amount=%7.2f => credit=%7.2f == cur=%7.2f" % [ xact.recorded_at.strftime('%Y-%m-%d %H:%M:%S'), xact.prev_credit || 0, xact.amount, xact.credit || 0, cur || 0 ]
+
+      cur = cur + xact.amount
+
+      if cur != xact.credit
+        puts "Xact id=#{xact.id} credit inconsistency #{cur} != #{xact.credit}"
+        cur = xact.credit if xact.credit
+      end
+    end
+
+    nil
+  end
+
   def send_bar_transactions!(from:, to:)
     xacts = acao_bar_transactions.where(recorded_at: from..to).order(recorded_at: :asc)
 
     return if xacts.count == 0
 
     # To be removed when log entries have credit,prev_credit chain
-    credit = acao_bar_credit - acao_bar_transactions.where('recorded_at > ?', from).reduce(0) { |a,x| a - x.price }
+    credit = acao_bar_credit - acao_bar_transactions.where('recorded_at > ?', from).reduce(0) { |a,x| a + x.amount }
 
     date = nil
     table = ''
 
     xacts.each do |x|
       if date != x.recorded_at.to_date
-        table << "-------------------------------------------------------------------\n"
-        table << "%-10s                                       Credito %8.2f €\n" % [ x.recorded_at.strftime('%d-%m-%Y'), credit ]
-        table << "-------------------------------------------------------------------\n"
+        table << "---------------------------------------------------------------------\n"
+        table << "%-10s                                         Credito %8.2f €\n" % [ x.recorded_at.strftime('%d-%m-%Y'), credit ]
+        table << "---------------------------------------------------------------------\n"
         date = x.recorded_at.to_date
       end
 
-      table <<  "%5s %2d %-50s %5.2f €\n" % [ x.recorded_at.strftime('%H:%M'), x.cnt, x.descr, x.price ]
+      table <<  "%5s %2d %-49s %8.2f €\n" % [ x.recorded_at.strftime('%H:%M'), x.cnt, x.descr, -x.amount ]
 
-      credit -= x.price
+      credit += x.amount
     end
 
-    table << "-------------------------------------------------------------------\n"
-    table << "                                                 Credito %8.2f €\n" % [ credit ]
+    table << "---------------------------------------------------------------------\n"
+    table << "                                                   Credito %8.2f €\n" % [ credit ]
 
     table
 
@@ -583,11 +606,15 @@ class Pilot < Ygg::Core::Person
     sync_credentials(other)
     sync_licenses(other.licenza)
     sync_medicals(other.visita)
-    sync_log_bar(other.log_bar)
+    sync_log_bar(other.log_bar2)
+    sync_log_bar_deposits(other.cassetta_bar_locale)
+    sync_log_bollini(other.log_bollini)
   end
 
   def sync_log_bar(other_log_bar)
-    self.class.merge(l: other_log_bar, r: acao_bar_transactions,
+    self.class.merge(
+      l: other_log_bar.order(id_logbar: :asc),
+      r: acao_bar_transactions.where('old_id IS NOT NULL').order(old_id: :asc),
       l_cmp_r: lambda { |l,r| l.id_logbar <=> r.old_id },
       l_to_r: lambda { |l|
         acao_bar_transactions << Ygg::Acao::BarTransaction.new(
@@ -595,14 +622,64 @@ class Pilot < Ygg::Core::Person
           cnt: 1,
           unit: '€',
           descr: l.descrizione.strip,
-          price: l.prezzo,
+          amount: -l.prezzo,
+          prev_credit: l.credito_prec,
+          credit: l.credito_rim,
           old_id: l.id_logbar,
         )
       },
       r_to_l: lambda { |r|
       },
       lr_update: lambda { |l,r|
+      }
+    )
+  end
+
+  def sync_log_bar_deposits(other_deposits)
+    self.class.merge(
+      l: other_deposits.order(id_cassetta_bar_locale: :asc),
+      r: acao_bar_transactions.where('old_cassetta_id IS NOT NULL').order(old_cassetta_id: :asc),
+      l_cmp_r: lambda { |l,r| l.id_cassetta_bar_locale <=> r.old_cassetta_id },
+      l_to_r: lambda { |l|
+        acao_bar_transactions << Ygg::Acao::BarTransaction.new(
+          recorded_at: l.data_reg,
+          cnt: 1,
+          unit: '€',
+          descr: 'Versamento',
+          amount: l.avere_cassa_bar_locale,
+          prev_credit: nil,
+          credit: nil,
+          old_cassetta_id: l.id_cassetta_bar_locale,
+        )
       },
+      r_to_l: lambda { |r|
+      },
+      lr_update: lambda { |l,r|
+      }
+    )
+  end
+
+  def sync_log_bollini(other)
+    self.class.merge(
+      l: other.order(id_log_bollini: :asc),
+      r: acao_bar_transactions.where('old_id IS NOT NULL').order(old_id: :asc),
+      l_cmp_r: lambda { |l,r| l.id_log_bollini <=> r.old_id },
+      l_to_r: lambda { |l|
+        acao_token_transactions << Ygg::Acao::TokenTransaction.new(
+          recorded_at: l.log_data,
+          old_operator: l.operatore.strip,
+          old_marche_mezzo: l.marche_mezzo.strip,
+          descr: l.note.strip,
+          amount: -l.n_bollini,
+          prev_credit: l.credito_prec,
+          credit: l.credito_att,
+          old_id: l.id_log_bollini,
+        )
+      },
+      r_to_l: lambda { |r|
+      },
+      lr_update: lambda { |l,r|
+      }
     )
   end
 
