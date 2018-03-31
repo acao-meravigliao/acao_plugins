@@ -15,6 +15,7 @@ class ModelsEngine < Rails::Engine
   config.acao = ActiveSupport::OrderedOptions.new if !defined? config.acao
   config.acao.soci_ml_dry_run = true
   config.acao.onda_import_dir = '/opt/onda_export/onda_import'
+  config.acao.satispay_http_debug = 3
 
   config.to_prepare do
     Ygg::Core::Person.class_eval do

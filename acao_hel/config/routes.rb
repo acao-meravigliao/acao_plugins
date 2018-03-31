@@ -64,12 +64,29 @@ Rails.application.routes.draw do
         collection do
           get 'status' => :get_status
         end
+
+        member do
+          post :offer
+          post :offer_cancel
+          post :offer_accept
+        end
+      end
+
+      hel_resources :tow_roster_days, controller: 'tow_roster_day/rest' do
+      end
+
+      hel_resources :tow_roster_entries, controller: 'tow_roster_entry/rest' do
       end
 
       hel_resources :years, controller: 'year/rest' do
       end
 
       hel_resources :payments, controller: 'payment/rest' do
+        collection do
+          get 'satispay_callback' => :satispay_callback
+          post 'satispay_callback' => :satispay_callback
+        end
+
         member do
           post 'complete' => :complete
         end

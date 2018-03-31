@@ -89,6 +89,21 @@ class Payment::RestController < Ygg::Hel::RestController
 
     ar_respond_with({})
   end
+
+  def satispay_callback
+    charge_id = request.query_parameters[:charge_id]
+
+    charge = Ygg::Acao::Payment::SatispayCharge.find_by!(charge_id: charge_id)
+
+    begin
+      hel_transaction('Satispay state change') do
+        charge.sync!
+      end
+    rescue AM::Satispay::Client::GenericError
+    end
+
+    ar_respond_with({ thanks: true })
+  end
 end
 
 end

@@ -21,6 +21,12 @@ class Payment < Ygg::PublicModel
            autosave: true,
            dependent: :destroy
 
+  has_many :satispay_charges,
+           class_name: 'Ygg::Acao::Payment::SatispayCharge',
+           embedded: true,
+           autosave: true,
+           dependent: :destroy
+
   has_one :membership,
           class_name: 'Ygg::Acao::Membership'
 
@@ -33,6 +39,8 @@ class Payment < Ygg::PublicModel
 
   after_initialize do
     if new_record?
+      code = nil
+
       loop do
         code = "A-" + Password.random(4, symbols: 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789')
         break if !self.class.find_by_code(code)
@@ -42,6 +50,10 @@ class Payment < Ygg::PublicModel
     end
   end
 
+  def amount
+    payment_services.reduce(0) { |a,x| a + x.price }
+  end
+
   def set_default_acl
     transaction do
       acl_entries.where(owner: self).destroy_all
@@ -49,7 +61,7 @@ class Payment < Ygg::PublicModel
     end
   end
 
-  def completed!
+  def completed!(no_autoinvoice: false)
     raise "Payment in state #{state} cannot be confirmed" if state != 'PENDING'
 
     self.state = 'COMPLETED'
@@ -58,6 +70,10 @@ class Payment < Ygg::PublicModel
     if membership
       membership.payment_completed!
       membership.save!
+    end
+
+    unless no_autoinvoice
+      export_invoice!
     end
 
     Ygg::Ml::Msg.notify(destinations: person, template: 'PAYMENT_COMPLETED', template_context: {
@@ -125,10 +141,16 @@ class Payment < Ygg::PublicModel
                class_name: 'Ygg::Acao::ServiceType'
   end
 
-  def build_receipt
-    totale_imponibile = 1234
-    totale_imposta = 222
-    totale = totale_imponibile + totale_imposta
+  PAYMENT_METHOD_MAP = {
+    'WIRE'      => 'BB',
+    'CHECK'     => 'AS',
+    'SATISPAY'  => 'SP',
+    'CARD'      => 'CC',
+    'CASH'      => 'CO',
+  }
+
+  def build_invoice
+    cod_pagamento = PAYMENT_METHOD_MAP[payment_method.upcase]
 
     ric_fisc = XMLInterface::RicFisc.new do |ric_fisc|
       ric_fisc.cod_schema = 'RICFISC1'
@@ -140,45 +162,76 @@ class Payment < Ygg::PublicModel
           testa.acconto_in_cassa = true
           testa.calcoli_su_imponibile = false
           testa.cod_divisa = 'EUR'
-          testa.cod_pagamento = 'BB'
+          testa.cod_pagamento = cod_pagamento
           testa.contrassegno = 0
           testa.nostro_rif = code
-          testa.tot_documento = 0#totale
-          testa.tot_imponibile = 0#totale_imponibile
-          testa.tot_imposta = 0#totale_imposta
+          testa.tot_documento = 0
+          testa.tot_imponibile = 0
+          testa.tot_imposta = 0
           testa.vostro_rif = code
           testa.dati_controparte = XMLInterface::RicFisc::Docu::Testa::DatiControparte.new
           testa.dati_controparte.citta = person.residence_location.city
-          testa.dati_controparte.codice_fiscale = person.italian_fiscal_code
+          testa.dati_controparte.codice_fiscale = person.italian_fiscal_code || person.vat_number
           testa.dati_controparte.e_mail = person.contacts.where(type: 'email').first.value
           testa.dati_controparte.indirizzo = person.residence_location.full_address
-          testa.dati_controparte.partita_iva = person.vat_number || ''
+          testa.dati_controparte.partita_iva = person.vat_number
           testa.dati_controparte.ragione_sociale = person.name
         end
 
         docu.righe = XMLInterface::RicFisc::Docu::Righe.new do |righe|
-          righe.righe << XMLInterface::RicFisc::Docu::Righe::Riga.new do |riga|
-            riga.cod_art = '0010S'
-            riga.cod_iva = ''
-            riga.cod_un_mis = 'NR.'
-            riga.descrizione = ''
-            riga.imponibile = ''
-            riga.importo_sconto = 0
-            riga.imposta = ''
-            riga.perc_sconto1 = 0
-            riga.perc_sconto2 = 0
-            riga.perc_sconto3 = 0
-            riga.perc_sconto4 = 0
-            riga.qta = 20
-            riga.tipo_riga = 2
-            riga.totale = ''
-            riga.valore_unitario = ''
+          payment_services.each do |svc|
+            if onda_1_code
+              righe.righe << XMLInterface::RicFisc::Docu::Righe::Riga.new do |riga|
+                riga.cod_art = onda_1_code
+                riga.cod_iva = ''
+                riga.cod_un_mis = 'NR.'
+                riga.descrizione = ''
+                riga.imponibile = ''
+                riga.importo_sconto = 0
+                riga.imposta = ''
+                riga.perc_sconto1 = 0
+                riga.perc_sconto2 = 0
+                riga.perc_sconto3 = 0
+                riga.perc_sconto4 = 0
+                riga.qta = onda_1_cnt
+                riga.tipo_riga = onda_1_type
+                riga.totale = ''
+                riga.valore_unitario = ''
 
-            riga.dati_art_serv = XMLInterface::RicFisc::Docu::Righe::Riga::DatiArtServ.new do |dati_art_serv|
-              dati_art_serv.cod_art = '0010S'
-              dati_art_serv.cod_un_mis_base = 'NR.'
-              dati_art_serv.descrizione = ''
-              dati_art_serv.tipo_articolo = 2
+                riga.dati_art_serv = XMLInterface::RicFisc::Docu::Righe::Riga::DatiArtServ.new do |dati_art_serv|
+                  dati_art_serv.cod_art = onda_1_code
+                  dati_art_serv.cod_un_mis_base = 'NR.'
+                  dati_art_serv.descrizione = ''
+                  dati_art_serv.tipo_articolo = onda_1_type
+                end
+              end
+            end
+
+            if onda_2_code
+              righe.righe << XMLInterface::RicFisc::Docu::Righe::Riga.new do |riga|
+                riga.cod_art = onda_2_code
+                riga.cod_iva = ''
+                riga.cod_un_mis = 'NR.'
+                riga.descrizione = ''
+                riga.imponibile = ''
+                riga.importo_sconto = 0
+                riga.imposta = ''
+                riga.perc_sconto1 = 0
+                riga.perc_sconto2 = 0
+                riga.perc_sconto3 = 0
+                riga.perc_sconto4 = 0
+                riga.qta = onda_2_cnt
+                riga.tipo_riga = onda_2_type
+                riga.totale = ''
+                riga.valore_unitario = ''
+
+                riga.dati_art_serv = XMLInterface::RicFisc::Docu::Righe::Riga::DatiArtServ.new do |dati_art_serv|
+                  dati_art_serv.cod_art = onda_2_code
+                  dati_art_serv.cod_un_mis_base = 'NR.'
+                  dati_art_serv.descrizione = ''
+                  dati_art_serv.tipo_articolo = onda_2_type
+                end
+              end
             end
           end
 
@@ -200,7 +253,7 @@ class Payment < Ygg::PublicModel
             riga.valore_unitario = ''
 
             riga.dati_art_serv = XMLInterface::RicFisc::Docu::Righe::Riga::DatiArtServ.new do |dati_art_serv|
-              dati_art_serv.cod_art = '0010S'
+              dati_art_serv.cod_art = '00000'
               dati_art_serv.cod_un_mis_base = 'NR.'
               dati_art_serv.descrizione = ''
               dati_art_serv.tipo_articolo = 2
@@ -267,15 +320,55 @@ class Payment < Ygg::PublicModel
     noko
   end
 
-  def export_receipt!
+  def export_invoice!(force: false)
+    raise "Cannot export in state #{status}" if status != 'COMPLETED' && !force
+    raise "Cannot export in state #{onda_export_status}" if onda_export_status != 'PENDING' && !force
+
     filename = File.join(Rails.application.config.acao.onda_import_dir, "#{Time.now.strftime('%Y%m%d_%H%M%S')}_#{code}.xml")
     filename_new = filename + '.new'
 
     File.open(filename_new , 'w') do |file|
-      file.write(build_receipt)
+      file.write(build_invoice)
     end
 
     File.rename(filename_new, filename)
+
+    self.onda_export_status = 'EXPORTED'
+    save!
+  end
+
+  require 'am/satispay'
+
+  def satispay_initiate(phone_number:)
+    satispay_charges.each do |c|
+      c.sync! if c.status == 'REQUIRED'
+      raise "Charge is still pending" if c.status == 'REQUIRED'
+    end
+
+    charge = Ygg::Acao::Payment::SatispayCharge.new(
+      user_phone_number: phone_number,
+      amount: amount,
+      description: "Pagamento Online codice #{code}",
+      idempotency_key: SecureRandom.base64(10),
+    )
+
+    satispay_charges << charge
+
+    charge.save!
+    charge.initiate!
+  end
+
+  def satispay_callback(charge_id:)
+    charge = satispay_charges.find_by!(charge_id: charge_id)
+    charge.sync!
+
+    case charge.status
+    when 'REQUIRED'
+    when 'SUCCESS'
+      completed!
+    when 'FAILURE'
+    else
+    end
   end
 end
 
