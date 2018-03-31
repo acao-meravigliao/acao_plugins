@@ -50,7 +50,7 @@ Ext.define('Extgui.Ygg.Acao.AircraftType.IndexPanel', {
    },
    {
     xtype: 'numbercolumn',
-    dataIndex: 'club_handicap',
+    dataIndex: 'handicap_club',
     width: 100,
     filterable: true,
    },
