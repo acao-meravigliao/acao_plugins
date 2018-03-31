@@ -13,7 +13,7 @@ class Year < Ygg::PublicModel
   self.table_name = 'acao_years'
 
   def self.renew_for_year
-    (Time.now + 10.month).year
+    (Time.now + 2.month).year
   end
 
   def self.renewal_year

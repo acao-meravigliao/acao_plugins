@@ -24,7 +24,7 @@ class AircraftType < Ygg::PublicModel
   validates_numericality_of :motor
 
   validates_numericality_of :handicap, :allow_nil => true
-  validates_numericality_of :club_handicap, :allow_nil => true
+  validates_numericality_of :handicap_club, :allow_nil => true
 end
 
 end
