@@ -17,6 +17,33 @@ class RosterEntry < Ygg::PublicModel
 
   belongs_to :roster_day,
              class_name: 'Ygg::Acao::RosterDay'
+
+  after_initialize do
+    if new_record?
+      self.selected_at = Time.now
+    end
+  end
+
+  def offer!
+    self.on_offer_since = Time.now
+    save!
+  end
+
+  def offer_cancel!
+    self.on_offer_since = nil
+    save!
+  end
+
+  def offer_accept!(from_person:)
+    transaction do
+      self.on_offer_since = nil
+      self.person = from_person
+      # Regenerate ACLs?
+      save!
+
+      # Send notification
+    end
+  end
 end
 
 end

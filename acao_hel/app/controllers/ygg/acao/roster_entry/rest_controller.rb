@@ -12,6 +12,10 @@ module Acao
 class RosterEntry::RestController < Ygg::Hel::RestController
   ar_controller_for Ygg::Acao::RosterEntry
 
+  action :offer
+  action :offer_cancel
+  action :offer_accept
+
   # FIXME FIXME FIXME FIXME
   capability(:anonymous,
     allow_all_actions: true,
@@ -27,6 +31,7 @@ class RosterEntry::RestController < Ygg::Hel::RestController
     attribute(:id) { show! }
     attribute(:uuid) { show! }
     attribute(:chief) { show! }
+    attribute(:selected_at) { show! }
 
     attribute :roster_day do
       show!
@@ -63,7 +68,7 @@ class RosterEntry::RestController < Ygg::Hel::RestController
   end
 
   def get_status
-    person = aaa_context.auth_person
+    person = aaa_context.auth_person.becomes(Ygg::Acao::Pilot)
 
     renewal_year = Ygg::Acao::Year.renewal_year
 
@@ -101,6 +106,39 @@ class RosterEntry::RestController < Ygg::Hel::RestController
       can_select_entries: can_select_entries,
       possible_roster_chief: membership ? membership.possible_roster_chief : false,
     })
+  end
+
+  def offer
+    ar_retrieve_resource
+    ar_authorize_member_action(resource: ar_resource, action: :offer)
+
+    hel_transaction('Offered for exchange') do
+      ar_resource.offer!
+    end
+
+    ar_respond_with({})
+  end
+
+  def offer_cancel
+    ar_retrieve_resource
+    ar_authorize_member_action(resource: ar_resource, action: :offer_cancel)
+
+    hel_transaction('Exchange offer canceled') do
+      ar_resource.offer_cancel!
+    end
+
+    ar_respond_with({})
+  end
+
+  def offer_accept
+    ar_retrieve_resource
+    ar_authorize_member_action(resource: ar_resource, action: :offer_accept)
+
+    hel_transaction('Exchange offer accepted') do
+      ar_resource.offer_accept!(from_user: aaa_context.auth_person)
+    end
+
+    ar_respond_with({})
   end
 end
 
