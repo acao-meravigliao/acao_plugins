@@ -34,6 +34,10 @@ class Pilot < Ygg::Core::Person
            class_name: '::Ygg::Acao::TokenTransaction',
            foreign_key: 'person_id'
 
+  has_many :acao_trailers,
+           class_name: '::Ygg::Acao::Trailer',
+           foreign_key: 'person_id'
+
   def self.active_members(time: Time.now)
     years = [ time.year ]
 
@@ -162,7 +166,7 @@ class Pilot < Ygg::Core::Person
 
       run_roster_notification(now: now, last_run: last_run)
 
-      if birth_date && birth_date.between?(last_run, now) &&
+      if birth_date && (birth_date + 10.hours).between?(last_run, now) &&
          birth_date.to_date == now.to_date # Otherwise it's too late
         send_happy_birthday!
       end
@@ -182,7 +186,7 @@ class Pilot < Ygg::Core::Person
       when_during_day = now.beginning_of_day # Midnight
 
       if when_during_day.between?(last_run, now)
-        send_bar_transactions!(from: last_run.beginning_of_day, to: now.end_of_day)
+        send_bar_transactions!(from: last_run, to: now.end_of_day)
 
         self.acao_bar_last_summary = now
         save!
@@ -224,7 +228,7 @@ class Pilot < Ygg::Core::Person
       }
 
       if license.valid_to
-        expired = if license.valid_to.between?(last_run, now)
+        expired = if license.valid_to.beginning_of_day.between?(last_run, now)
           'EXPIRED'
         elsif (license.valid_to.beginning_of_day - when_in_advance).between?(last_run, now)
           'EXPIRING'
@@ -239,7 +243,7 @@ class Pilot < Ygg::Core::Person
       end
 
       if license.valid_to2
-        expired = if license.valid_to2.between?(last_run, now)
+        expired = if license.valid_to2.beginning_of_day.between?(last_run, now)
           'EXPIRED'
         elsif (license.valid_to2.beginning_of_day - when_in_advance).between?(last_run, now)
           'EXPIRING'
@@ -259,7 +263,7 @@ class Pilot < Ygg::Core::Person
 
       license.ratings do |rating|
         if rating.valid_to
-          expired = if rating.valid_to.between?(last_run, now)
+          expired = if rating.valid_to.beginning_of_day.between?(last_run, now)
             'EXPIRED'
           elsif (rating.valid_to.beginning_of_day - when_in_advance).between?(last_run, now)
             'EXPIRING'
@@ -283,7 +287,7 @@ class Pilot < Ygg::Core::Person
     acao_medicals.each do |medical|
       template = nil
 
-      if medical.valid_to.between?(last_run, now)
+      if medical.valid_to.beginning_of_day.between?(last_run, now)
         template = 'MEDICAL_EXPIRED'
       elsif (medical.valid_to.beginning_of_day - when_in_advance).between?(last_run, now)
         template = 'MEDICAL_EXPIRING'
@@ -326,33 +330,13 @@ class Pilot < Ygg::Core::Person
     return if xacts.count == 0
 
     # To be removed when log entries have credit,prev_credit chain
-    credit = acao_bar_credit - acao_bar_transactions.where('recorded_at > ?', from).reduce(0) { |a,x| a + x.amount }
-
-    date = nil
-    table = ''
-
-    xacts.each do |x|
-      if date != x.recorded_at.to_date
-        table << "---------------------------------------------------------------------\n"
-        table << "%-10s                                         Credito %8.2f €\n" % [ x.recorded_at.strftime('%d-%m-%Y'), credit ]
-        table << "---------------------------------------------------------------------\n"
-        date = x.recorded_at.to_date
-      end
-
-      table <<  "%5s %2d %-49s %8.2f €\n" % [ x.recorded_at.strftime('%H:%M'), x.cnt, x.descr, -x.amount ]
-
-      credit += x.amount
-    end
-
-    table << "---------------------------------------------------------------------\n"
-    table << "                                                   Credito %8.2f €\n" % [ credit ]
-
-    table
+    starting_credit = acao_bar_credit - acao_bar_transactions.where('recorded_at > ?', from).reduce(0) { |a,x| a + x.amount }
 
     Ygg::Ml::Msg::Email.notify(destinations: self, template: 'BAR_SUMMARY', template_context: {
       first_name: first_name,
       date: xacts.first.recorded_at.strftime('%d-%m-%Y'),
-      transactions_table: table,
+      starting_credit: starting_credit,
+      xacts: xacts,
     })
   end
 
@@ -483,6 +467,41 @@ class Pilot < Ygg::Core::Person
     end
   end
 
+  def self.sync_to_acao_for_wp!(relation: active_members)
+    data = ''
+
+    IO::popen([ '/usr/bin/ssh', '-i', '/var/lib/yggdra/lino', 'acao@iserver.acao.it', '/usr/local/bin/wp', '--skip-plugins', '--path=/srv/hosting/links/acao.it/htdocs',
+                'user', 'import-csv', '-' ], 'r+') do |io|
+
+      io.write("user_login,user_email,display_name,user_pass,first_name,last_name\n")
+
+      relation.each do |m|
+        user = [
+          m.acao_code.to_s,
+          m.acao_code.to_s + '@acao.it',
+          #m.contacts.where(type: 'email').any? ? m.contacts.where(type: 'email').first.value : '',
+          m.name,
+          m.credentials.where('fqda LIKE \'%@cp.acao.it\'').first.password,
+          m.first_name,
+          m.last_name,
+        ]
+
+        io.write(user.join(',') + "\n")
+      end
+
+      io.close_write
+
+      data = io.read
+      io.close
+
+      if !$?.success?
+        raise "Cannot update wordpress users"
+      end
+    end
+
+    data
+  end
+
 
   ############ Old Database Synchronization
 
@@ -561,7 +580,8 @@ class Pilot < Ygg::Core::Person
   end
 
   def sync_from_maindb(other)
-    self.first_name = (other.Nome.blank? ? '?' : other.Nome).strip
+    self.first_name = (other.Nome.blank? ? '?' : other.Nome).strip.split(' ').first
+    self.middle_name = (other.Nome.blank? ? '?' : other.Nome).strip.split(' ')[1..-1].join(' ')
     self.last_name = other.Cognome.strip
     self.gender = other.Sesso
     self.birth_date = other.Data_Nascita != Date.parse('1900-01-01 00:00:00 UTC') ? other.Data_Nascita : nil
@@ -629,6 +649,8 @@ class Pilot < Ygg::Core::Person
         )
       },
       r_to_l: lambda { |r|
+        puts "Unexpected record in log bar"
+        r.destroy
       },
       lr_update: lambda { |l,r|
       }
@@ -653,6 +675,8 @@ class Pilot < Ygg::Core::Person
         )
       },
       r_to_l: lambda { |r|
+        puts "Unexpected record in log bar deposits"
+        r.destroy
       },
       lr_update: lambda { |l,r|
       }
