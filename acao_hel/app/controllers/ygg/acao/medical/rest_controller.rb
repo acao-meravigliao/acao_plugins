@@ -12,6 +12,8 @@ module Acao
 class Medical::RestController < Ygg::Hel::RestController
   ar_controller_for Ygg::Acao::Medical
 
+  load_capabilities!
+
   view :grid do
     empty!
     attribute(:id) { show! }

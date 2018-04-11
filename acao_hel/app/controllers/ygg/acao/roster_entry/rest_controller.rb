@@ -12,18 +12,11 @@ module Acao
 class RosterEntry::RestController < Ygg::Hel::RestController
   ar_controller_for Ygg::Acao::RosterEntry
 
+  load_capabilities!
+
   action :offer
   action :offer_cancel
   action :offer_accept
-
-  # FIXME FIXME FIXME FIXME
-  capability(:anonymous,
-    allow_all_actions: true,
-    all_readable: true,
-    all_writable: true,
-    all_creatable: true,
-    recursive: true,
-  )
 
   view :grid do
     empty!
@@ -92,20 +85,24 @@ class RosterEntry::RestController < Ygg::Hel::RestController
     can_select_entries = false
     roster_entries = nil
 
+    res = {
+      renew_for_year: renewal_year.year,
+    }
+
     if membership && (membership.status == 'COMPLETED' || membership.status == 'WAITING_PAYMENT')
-      can_select_entries = true
       roster_entries_needed = person.roster_entries_needed(year: renewal_year.year)
       needed_entries_present = person.roster_needed_entries_present(year: renewal_year.year)
+
+      res.merge!(
+        can_select_entries: true,
+        needed_total: roster_entries_needed[:total],
+        needed_high_season: roster_entries_needed[:high_season],
+        needed_entries_present: needed_entries_present,
+        possible_roster_chief: membership ? membership.possible_roster_chief : false,
+      )
     end
 
-    ar_respond_with({
-      renew_for_year: renewal_year.year,
-      needed_entries_present: needed_entries_present,
-      needed_total: roster_entries_needed[:total],
-      needed_high_season: roster_entries_needed[:high_season],
-      can_select_entries: can_select_entries,
-      possible_roster_chief: membership ? membership.possible_roster_chief : false,
-    })
+    ar_respond_with(res)
   end
 
   def offer

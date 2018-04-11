@@ -23,6 +23,10 @@ class Trailer < Ygg::PublicModel
   include Ygg::Core::Loggable
   define_default_log_controller(self)
 
+  append_capabilities_for(:blahblah) do |aaa_context|
+    person == aaa_context.auth_person ? [ :owner ] : []
+  end
+
 #  has_acl
 #
 #  include Ygg::Core::Notifiable

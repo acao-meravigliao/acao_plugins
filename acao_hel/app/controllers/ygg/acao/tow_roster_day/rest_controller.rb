@@ -12,14 +12,6 @@ module Acao
 class TowRosterDay::RestController < Ygg::Hel::RestController
   ar_controller_for Ygg::Acao::TowRosterDay
 
-  capability(:anonymous,
-    allow_all_actions: true,
-    all_readable: true,
-    all_writable: false,
-    all_creatable: false,
-    recursive: true,
-  )
-
   view :_default_ do
     attribute :roster_entries do
       attribute :person do

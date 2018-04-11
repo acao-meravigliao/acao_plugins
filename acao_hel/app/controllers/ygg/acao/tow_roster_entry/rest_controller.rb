@@ -12,15 +12,6 @@ module Acao
 class TowRosterEntry::RestController < Ygg::Hel::RestController
   ar_controller_for Ygg::Acao::TowRosterEntry
 
-  # FIXME FIXME FIXME FIXME
-  capability(:anonymous,
-    allow_all_actions: true,
-    all_readable: true,
-    all_writable: true,
-    all_creatable: true,
-    recursive: true,
-  )
-
   view :grid do
     empty!
 

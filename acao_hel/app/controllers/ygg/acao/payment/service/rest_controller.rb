@@ -11,6 +11,8 @@ module Acao
 
 class Payment::Service::RestController < Ygg::Hel::RestController
   ar_controller_for Ygg::Acao::Payment::Service
+
+  load_capabilities!
 end
 
 end

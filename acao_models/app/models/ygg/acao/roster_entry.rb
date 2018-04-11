@@ -24,6 +24,10 @@ class RosterEntry < Ygg::PublicModel
     end
   end
 
+  append_capabilities_for(:blahblah) do |aaa_context|
+    aaa_context.auth_person.id == person_id ? [ :owner ] : []
+  end
+
   def offer!
     self.on_offer_since = Time.now
     save!

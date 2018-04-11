@@ -20,6 +20,9 @@ class Membership < Ygg::PublicModel
              class_name: 'Ygg::Acao::Payment',
              optional: true
 
+  belongs_to :reference_year,
+             class_name: 'Ygg::Acao::Year'
+
   include Ygg::Core::Loggable
   define_default_log_controller(self)
 
@@ -27,11 +30,15 @@ class Membership < Ygg::PublicModel
 
   include Ygg::Core::Notifiable
 
-  def set_default_acl
-    transaction do
-      acl_entries.where(owner: self).destroy_all
-      acl_entries << AclEntry.new(owner: self, person: person, capability: 'owner')
-    end
+#  def set_default_acl
+#    transaction do
+#      acl_entries.where(owner: self).destroy_all
+#      acl_entries << AclEntry.new(owner: self, person: person, capability: 'owner')
+#    end
+#  end
+
+  append_capabilities_for(:blahblah) do |aaa_context|
+    person == aaa_context.auth_person ? [ :owner ] : []
   end
 
   def self.compute_completed_years(from, to)
@@ -96,7 +103,7 @@ class Membership < Ygg::PublicModel
       reason_for_payment: "rinnovo associazione, codice pilota #{person.acao_code}"
     )
 
-    payment.set_default_acl
+#    payment.set_default_acl
 
     context = determine_base_context(person: person, year: renewal_year)
 
@@ -135,7 +142,7 @@ class Membership < Ygg::PublicModel
     membership.email_allowed = enable_email
     membership.payment = payment
 
-    membership.set_default_acl
+#    membership.set_default_acl
 
     prev_membership = person.acao_memberships.where('year <> ?', renewal_year.year).order(year: 'DESC').first
     if prev_membership

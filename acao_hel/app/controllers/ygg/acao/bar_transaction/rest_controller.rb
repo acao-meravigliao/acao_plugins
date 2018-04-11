@@ -12,6 +12,8 @@ module Acao
 class BarTransaction::RestController < Ygg::Hel::RestController
   ar_controller_for Ygg::Acao::BarTransaction
 
+  load_capabilities!
+
   view :grid do
     empty!
     attribute(:id) { show! }

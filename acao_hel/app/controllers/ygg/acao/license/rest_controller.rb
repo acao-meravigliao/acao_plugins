@@ -12,6 +12,8 @@ module Acao
 class License::RestController < Ygg::Hel::RestController
   ar_controller_for Ygg::Acao::License
 
+  load_capabilities!
+
   view :grid do
     empty!
     attribute(:id) { show! }

@@ -28,6 +28,10 @@ class BarTransaction < Ygg::PublicModel
 #      acl_entries << AclEntry.new(owner: self, person: person, capability: 'owner')
 #    end
 #  end
+
+  append_capabilities_for(:blahblah) do |aaa_context|
+    person == aaa_context.auth_person ? [ :owner ] : []
+  end
 end
 
 end

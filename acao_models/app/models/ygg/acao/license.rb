@@ -22,6 +22,16 @@ class License < Ygg::PublicModel
            autosave: true,
            dependent: :destroy
 
+  has_meta_class
+
+  def self.with_any_capability(aaa_context)
+    where(arel_table[:pilot_id].eq(aaa_context.auth_person.id))
+  end
+
+  append_capabilities_for(:blahblah) do |aaa_context|
+    pilot_id == aaa_context.auth_person.id ? [ :owner ] : []
+  end
+
   class Rating < Ygg::BasicModel
     self.table_name = 'acao_license_ratings'
     self.inheritance_column = false

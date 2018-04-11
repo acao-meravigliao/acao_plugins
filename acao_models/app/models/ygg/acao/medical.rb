@@ -15,6 +15,16 @@ class Medical < Ygg::PublicModel
 
   belongs_to :pilot,
              class_name: 'Ygg::Acao::Pilot'
+
+  has_meta_class
+
+  def self.with_any_capability(aaa_context)
+    where(arel_table[:pilot_id].eq(aaa_context.auth_person.id))
+  end
+
+  append_capabilities_for(:blahblah) do |aaa_context|
+    pilot_id == aaa_context.auth_person.id ? [ :owner ] : []
+  end
 end
 
 end

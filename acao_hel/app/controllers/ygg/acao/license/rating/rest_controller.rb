@@ -9,9 +9,7 @@
 module Ygg
 module Acao
 
-class License::Rating::RestController
-  include ActiveRest::Controller::Basic
-
+class License::Rating::RestController < Ygg::Hel::RestController
   ar_controller_for License::Rating
 end
 

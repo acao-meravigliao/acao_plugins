@@ -14,6 +14,8 @@ class ServiceType < Ygg::PublicModel
 
   has_many :person_services,
            class_name: 'Ygg::Acao::PersonService'
+
+  has_meta_class
 end
 
 end

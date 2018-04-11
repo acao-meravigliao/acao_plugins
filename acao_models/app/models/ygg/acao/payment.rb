@@ -54,11 +54,25 @@ class Payment < Ygg::PublicModel
     payment_services.reduce(0) { |a,x| a + x.price }
   end
 
-  def set_default_acl
-    transaction do
-      acl_entries.where(owner: self).destroy_all
-      acl_entries << AclEntry.new(owner: self, person: person, capability: 'owner')
-    end
+#  def set_default_acl
+#    transaction do
+#      acl_entries.where(owner: self).destroy_all
+#      acl_entries << AclEntry.new(owner: self, person: person, capability: 'owner')
+#    end
+#  end
+
+  append_capabilities_for(:blahblah) do |aaa_context|
+    person == aaa_context.auth_person ? [ :owner ] : []
+  end
+
+  def self.with_any_capability(aaa_context)
+    aclk = reflections['acl_entries'].klass.arel_table
+    pid = aaa_context.auth_person.id
+    gids = aaa_context.auth_person.groups.map(&:id)
+
+    rel = left_outer_joins(:acl_entries)
+    rel = rel.where(arel_table[:person_id].eq(pid).or(aclk[:person_id].eq(pid).or(aclk[:group_id].in(gids))))
+    rel
   end
 
   def completed!(no_autoinvoice: false)
@@ -128,8 +142,10 @@ class Payment < Ygg::PublicModel
     end
   end
 
-  class Service < Ygg::BasicModel
+  class Service < Ygg::PublicModel
     self.table_name = 'acao_payment_services'
+
+    has_meta_class
 
     include Ygg::Core::Loggable
     define_default_log_controller(self)
@@ -139,6 +155,10 @@ class Payment < Ygg::PublicModel
 
     belongs_to :service_type,
                class_name: 'Ygg::Acao::ServiceType'
+
+    append_capabilities_for(:blahblah) do |aaa_context|
+      payment.person == aaa_context.auth_person ? [ :owner ] : []
+    end
   end
 
   PAYMENT_METHOD_MAP = {
