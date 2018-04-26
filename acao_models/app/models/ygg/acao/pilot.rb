@@ -69,7 +69,9 @@ class Pilot < Ygg::Core::Person
   #
   def roster_entries_needed(year: Time.now.year)
     ym = Ygg::Acao::Year.find_by!(year: year)
+
     membership = acao_memberships.find_by(year: year)
+    return nil if !membership
 
     needed = {
       total: 2,
@@ -533,8 +535,8 @@ class Pilot < Ygg::Core::Person
 
   def self.sync_from_maindb!
 
-    l_records = Ygg::Acao::MainDb::Socio.order(id_soci_dati_generale: :asc)
-    r_records = Ygg::Acao::Pilot.where('acao_ext_id IS NOT NULL').order(acao_ext_id: :asc)
+    l_records = Ygg::Acao::MainDb::Socio.order(id_soci_dati_generale: :asc).lock
+    r_records = Ygg::Acao::Pilot.where('acao_ext_id IS NOT NULL').order(acao_ext_id: :asc).lock
 
     transaction do
       merge(l: l_records, r: r_records,
@@ -633,8 +635,8 @@ class Pilot < Ygg::Core::Person
 
   def sync_log_bar(other_log_bar)
     self.class.merge(
-      l: other_log_bar.order(id_logbar: :asc),
-      r: acao_bar_transactions.where('old_id IS NOT NULL').order(old_id: :asc),
+      l: other_log_bar.order(id_logbar: :asc).lock,
+      r: acao_bar_transactions.where('old_id IS NOT NULL').order(old_id: :asc).lock,
       l_cmp_r: lambda { |l,r| l.id_logbar <=> r.old_id },
       l_to_r: lambda { |l|
         acao_bar_transactions << Ygg::Acao::BarTransaction.new(
@@ -659,8 +661,8 @@ class Pilot < Ygg::Core::Person
 
   def sync_log_bar_deposits(other_deposits)
     self.class.merge(
-      l: other_deposits.order(id_cassetta_bar_locale: :asc),
-      r: acao_bar_transactions.where('old_cassetta_id IS NOT NULL').order(old_cassetta_id: :asc),
+      l: other_deposits.order(id_cassetta_bar_locale: :asc).lock,
+      r: acao_bar_transactions.where('old_cassetta_id IS NOT NULL').order(old_cassetta_id: :asc).lock,
       l_cmp_r: lambda { |l,r| l.id_cassetta_bar_locale <=> r.old_cassetta_id },
       l_to_r: lambda { |l|
         acao_bar_transactions << Ygg::Acao::BarTransaction.new(
@@ -685,8 +687,8 @@ class Pilot < Ygg::Core::Person
 
   def sync_log_bollini(other)
     self.class.merge(
-      l: other.order(id_log_bollini: :asc),
-      r: acao_bar_transactions.where('old_id IS NOT NULL').order(old_id: :asc),
+      l: other.order(id_log_bollini: :asc).lock,
+      r: acao_token_transactions.reload.where('old_id IS NOT NULL').order(old_id: :asc).lock,
       l_cmp_r: lambda { |l,r| l.id_log_bollini <=> r.old_id },
       l_to_r: lambda { |l|
         acao_token_transactions << Ygg::Acao::TokenTransaction.new(

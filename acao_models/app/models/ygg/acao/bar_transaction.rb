@@ -30,7 +30,7 @@ class BarTransaction < Ygg::PublicModel
 #  end
 
   append_capabilities_for(:blahblah) do |aaa_context|
-    person == aaa_context.auth_person ? [ :owner ] : []
+     aaa_context.auth_person.id == person_id ? [ :owner ] : []
   end
 end
 

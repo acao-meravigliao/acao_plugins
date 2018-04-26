@@ -38,7 +38,7 @@ class Membership < Ygg::PublicModel
 #  end
 
   append_capabilities_for(:blahblah) do |aaa_context|
-    person == aaa_context.auth_person ? [ :owner ] : []
+     aaa_context.auth_person.id == person_id ? [ :owner ] : []
   end
 
   def self.compute_completed_years(from, to)

@@ -41,7 +41,7 @@ Ext.define('Extgui.Ygg.Acao.ServiceType.IndexPanel', {
    },
    {
     xtype: 'decimalcolumn',
-    dataIndex: 'name',
+    dataIndex: 'price',
     width: 80,
     filterable: true,
     unit: '€',

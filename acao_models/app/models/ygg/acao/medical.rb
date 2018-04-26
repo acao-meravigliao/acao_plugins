@@ -23,7 +23,7 @@ class Medical < Ygg::PublicModel
   end
 
   append_capabilities_for(:blahblah) do |aaa_context|
-    pilot_id == aaa_context.auth_person.id ? [ :owner ] : []
+     aaa_context.auth_person.id == pilot_id ? [ :owner ] : []
   end
 end
 

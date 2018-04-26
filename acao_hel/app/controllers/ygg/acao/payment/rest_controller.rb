@@ -79,6 +79,25 @@ class Payment::RestController < Ygg::Hel::RestController
     end
   end
 
+  view :full do
+    attribute :payment_services do
+      show!
+
+      attribute :service_type do
+        show!
+      end
+    end
+
+    attribute :person do
+      show!
+      empty!
+      attribute(:first_name) { show! }
+      attribute(:last_name) { show! }
+      attribute(:handle) { show! }
+      attribute(:italian_fiscal_code) { show! }
+    end
+  end
+
   def complete
     ar_retrieve_resource
     ar_authorize_member_action(resource: ar_resource, action: :complete)
