@@ -4,6 +4,9 @@ Rails.application.routes.draw do
       hel_resources :flights, controller: 'flight/rest' do
       end
 
+      hel_resources :trailers, controller: 'trailer/rest' do
+      end
+
       hel_resources :trackers, controller: 'tracker/rest' do
       end
 
@@ -92,7 +95,10 @@ Rails.application.routes.draw do
         end
       end
 
-      hel_resources :person_services, controller: 'person_service/rest' do
+      hel_resources :invoices, controller: 'invoice/rest' do
+      end
+
+      hel_resources :member_services, controller: 'member_service/rest' do
       end
 
       post 'password_recovery' => 'password_recovery#recover'

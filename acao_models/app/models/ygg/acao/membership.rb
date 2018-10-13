@@ -13,11 +13,37 @@ module Acao
 class Membership < Ygg::PublicModel
   self.table_name = 'acao_memberships'
 
+  self.porn_migration += [
+    [ :must_have_column, { name: "id", type: :integer, null: false, limit: 4 } ],
+    [ :must_have_column, { name: "uuid", type: :uuid, default: nil, default_function: "gen_random_uuid()", null: false}],
+    [ :must_have_column, {name: "person_id", type: :integer, default: nil, limit: 4, null: false}],
+    [ :must_have_column, {name: "invoice_detail_id", type: :uuid, default: nil, null: true}],
+    [ :must_have_column, {name: "status", type: :string, default: nil, limit: 32, null: true}],
+    [ :must_have_column, {name: "valid_from", type: :datetime, default: nil, null: false}],
+    [ :must_have_column, {name: "valid_to", type: :datetime, default: nil, null: false}],
+    [ :must_have_column, {name: "reference_year_id", type: :integer, default: nil, limit: 4, null: false}],
+    [ :must_have_column, {name: "email_allowed", type: :boolean, default: true, null: false}],
+    [ :must_have_column, {name: "tug_pilot", type: :boolean, default: false, null: true}],
+    [ :must_have_column, {name: "board_member", type: :boolean, default: false, null: true}],
+    [ :must_have_column, {name: "instructor", type: :boolean, default: false, null: true}],
+    [ :must_have_column, {name: "possible_roster_chief", type: :boolean, default: false, null: false}],
+    [ :must_have_column, {name: "fireman", type: :boolean, default: false, null: true}],
+    [ :must_have_column, {name: "student", type: :boolean, default: false, null: true}],
+    [ :must_have_index, {columns: ["uuid"], unique: true}],
+    [ :must_have_index, {columns: ["person_id"], unique: false}],
+    [ :must_have_index, {columns: ["person_id", "reference_year_id"], unique: true}],
+    [ :must_have_index, {columns: ["reference_year_id"], unique: false}],
+    [ :must_have_index, {columns: ["invoice_detail_id"], unique: false}],
+    [ :must_have_fk, {to_table: "core_people", column: "person_id", primary_key: "id", on_delete: nil, on_update: nil}],
+    [ :must_have_fk, {to_table: "acao_years", column: "reference_year_id", primary_key: "id", on_delete: nil, on_update: nil}],
+    [ :must_have_fk, {to_table: "acao_invoice_details", column: "invoice_detail_id", primary_key: "id", on_delete: :nullify, on_update: nil}],
+  ]
+
   belongs_to :person,
              class_name: '::Ygg::Core::Person'
 
-  belongs_to :payment,
-             class_name: 'Ygg::Acao::Payment',
+  belongs_to :invoice_detail,
+             class_name: 'Ygg::Acao::Invoice::Detail',
              optional: true
 
   belongs_to :reference_year,
@@ -29,17 +55,6 @@ class Membership < Ygg::PublicModel
   has_acl
 
   include Ygg::Core::Notifiable
-
-#  def set_default_acl
-#    transaction do
-#      acl_entries.where(owner: self).destroy_all
-#      acl_entries << AclEntry.new(owner: self, person: person, capability: 'owner')
-#    end
-#  end
-
-  append_capabilities_for(:blahblah) do |aaa_context|
-     aaa_context.auth_person.id == person_id ? [ :owner ] : []
-  end
 
   def self.compute_completed_years(from, to)
     # Number of completed years is not trivial :)
@@ -70,6 +85,10 @@ class Membership < Ygg::PublicModel
     elsif age >= 75
       ass_type = 'ASS_STANDARD'
       cav_type = 'CAV_75'
+    elsif person.acao_has_disability
+      # This supposes CAV_DIS is always equal or more expensive than CAV_75 a CAV_26
+      ass_type = 'ASS_STANDARD'
+      cav_type = 'CAV_DIS'
     else
       #if person.residence_location &&
       #   Geocoder::Calculations.distance_between(
@@ -94,35 +113,66 @@ class Membership < Ygg::PublicModel
     payment = nil
 
     renewal_year = Ygg::Acao::Year.renewal_year
-
-    payment = Ygg::Acao::Payment.create(
-      person: person,
-      created_at: Time.now,
-      expires_at: Time.now + 10.days,
-      payment_method: payment_method,
-      reason_for_payment: "rinnovo associazione, codice pilota #{person.acao_code}"
-    )
-
-#    payment.set_default_acl
-
     context = determine_base_context(person: person, year: renewal_year)
+    member = person.becomes(Ygg::Acao::Pilot)
 
-    # Association
-    ass_service_type = Ygg::Acao::ServiceType.find_by_symbol(context[:ass_type])
-
-    payment.payment_services << Ygg::Acao::Payment::Service.new(
-      service_type: ass_service_type,
-      price: ass_service_type.price,
+    # Invoice -----------------
+    invoice = Ygg::Acao::Invoice.create!(
+      person: person,
+      payment_method: payment_method,
     )
 
-    # CAV
+    member.acao_email_allowed = enable_email
+
+    # Association --------------
+    ass_service_type = Ygg::Acao::ServiceType.find_by!(symbol: context[:ass_type])
+
+    if person.acao_memberships.find_by(reference_year: renewal_year)
+      raise "Membership already present"
+    end
+
+    ass_invoice_detail = Ygg::Acao::Invoice::Detail.new(
+      service_type: ass_service_type,
+      count: 1,
+      price: ass_service_type.price,
+      descr: ass_service_type.name,
+    )
+    invoice.details << ass_invoice_detail
+
+    membership = Ygg::Acao::Membership.create!(
+      person: person,
+      reference_year: renewal_year,
+      status: 'WAITING_PAYMENT',
+      invoice_detail: ass_invoice_detail,
+      valid_from: Time.now,
+      valid_to: Time.new(renewal_year.year).end_of_year,
+      possible_roster_chief: person.acao_roster_chief,
+      student: person.acao_is_student,
+      tug_pilot: person.acao_is_tug_pilot,
+      board_member: person.acao_is_board_member,
+      instructor: person.acao_is_instructor,
+      fireman: person.acao_is_fireman,
+    )
+
+    # CAV --------------
 
     if with_cav && context[:cav_type]
-      cav_service_type = Ygg::Acao::ServiceType.find_by_symbol(context[:cav_type])
+      cav_service_type = Ygg::Acao::ServiceType.find_by!(symbol: context[:cav_type])
 
-      payment.payment_services << Ygg::Acao::Payment::Service.new(
+      cav_invoice_detail = Ygg::Acao::Invoice::Detail.new(
+        count: 1,
         service_type: cav_service_type,
         price: cav_service_type.price,
+        descr: cav_service_type.name,
+      )
+      invoice.details << cav_invoice_detail
+
+      cav_member_service = Ygg::Acao::Member::Service.create(
+        person: person,
+        service_type: cav_service_type,
+        invoice_detail: cav_invoice_detail,
+        valid_from: Time.new(renewal_year.year).beginning_of_year,
+        valid_to: Time.new(renewal_year.year).end_of_year,
       )
     end
 
@@ -130,36 +180,39 @@ class Membership < Ygg::PublicModel
     services.each do |service|
       service_type = Ygg::Acao::ServiceType.find(service[:type_id])
 
-      payment.payment_services << Ygg::Acao::Payment::Service.new(
+      invoice_detail = Ygg::Acao::Invoice::Detail.new(
+        count: 1,
         service_type: service_type,
-        extra_info: service[:extra_info],
         price: service_type.price,
+        descr: service_type.name,
+        data: service[:extra_info],
+      )
+      invoice.details << invoice_detail
+
+      Ygg::Acao::Member::Service.create(
+        person: person,
+        service_type: service_type,
+        invoice_detail: invoice_detail,
+        valid_from: Time.new(renewal_year.year).beginning_of_year,
+        valid_to: Time.new(renewal_year.year).end_of_year,
+        service_data: service[:extra_info],
       )
     end
 
-    membership = person.acao_memberships.find_or_create_by(year: renewal_year.year)
-    membership.status = 'WAITING_PAYMENT'
-    membership.email_allowed = enable_email
-    membership.payment = payment
+    # Done! -------------
 
-#    membership.set_default_acl
-
-    prev_membership = person.acao_memberships.where('year <> ?', renewal_year.year).order(year: 'DESC').first
-    if prev_membership
-      membership.tug_pilot = prev_membership.tug_pilot
-      membership.board_member = prev_membership.board_member
-      membership.instructor = prev_membership.instructor
-      membership.possible_roster_chief = prev_membership.possible_roster_chief
-      membership.fireman = prev_membership.fireman
-    end
-
-    membership.save!
+    invoice.close!
+    payment = invoice.generate_payment!(
+      reason: "rinnovo associazione, codice pilota #{person.acao_code}",
+      timeout: 10.days,
+    )
+    payment.save!
 
     Ygg::Ml::Msg.notify(destinations: person, template: 'MEMBERSHIP_RENEWED', template_context: {
       first_name: person.first_name,
       year: renewal_year.year,
       payment_expiration: payment.expires_at.strftime('%d-%m-%Y'),
-    }, objects: [ payment, membership ])
+    }, objects: [ invoice, payment, membership ])
 
     membership
   end
@@ -177,7 +230,7 @@ class Membership < Ygg::PublicModel
     ym = Ygg::Acao::Year.find_by(year: year)
     return false if !ym
 
-    time.between?(ym.renew_opening_time, ym.ending_time)
+    time.between?(Time.new(ym.year).beginning_of_year, Time.new(ym.year).ending_of_year)
   end
 
 end

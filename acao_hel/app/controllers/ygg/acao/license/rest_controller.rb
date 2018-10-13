@@ -12,7 +12,7 @@ module Acao
 class License::RestController < Ygg::Hel::RestController
   ar_controller_for Ygg::Acao::License
 
-  load_capabilities!
+  load_role_defs!
 
   view :grid do
     empty!
@@ -53,6 +53,10 @@ class License::RestController < Ygg::Hel::RestController
     attribute(:ratings) do
       show!
     end
+  end
+
+  build_member_roles(:blahblah) do |obj|
+    obj.pilot_id == aaa_context.auth_person.id ? [ :owner ] : []
   end
 end
 

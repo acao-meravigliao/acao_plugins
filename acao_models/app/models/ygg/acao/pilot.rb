@@ -14,17 +14,41 @@ module Acao
 
 class Pilot < Ygg::Core::Person
 
+  self.porn_migration += [
+    [ :must_have_column, {name: "acao_ext_id", type: :integer, default: nil, limit: 4, null: true}],
+    [ :must_have_column, {name: "acao_code", type: :integer, default: nil, limit: 4, null: true}],
+    [ :must_have_column, {name: "acao_last_notify_run", type: :datetime, default: nil, null: true}],
+    [ :must_have_column, {name: "acao_sleeping", type: :boolean, default: false, null: false}],
+    [ :must_have_column, {name: "acao_bar_credit", type: :decimal, default: 0.0, precision: 14, scale: 6, null: false}],
+    [ :must_have_column, {name: "acao_bollini", type: :decimal, default: 0.0, precision: 14, scale: 6, null: false}],
+    [ :must_have_column, {name: "acao_bar_last_summary", type: :datetime, default: nil, null: true}],
+    [ :must_have_column, {name: "acao_roster_chief", type: :boolean, default: false, null: false}],
+    [ :must_have_column, {name: "acao_roster_allowed", type: :boolean, default: false, null: false}],
+    [ :must_have_column, {name: "acao_is_student", type: :boolean, default: false, null: false}],
+    [ :must_have_column, {name: "acao_is_tug_pilot", type: :boolean, default: false, null: false}],
+    [ :must_have_column, {name: "acao_is_board_member", type: :boolean, default: false, null: false}],
+    [ :must_have_column, {name: "acao_is_instructor", type: :boolean, default: false, null: false}],
+    [ :must_have_column, {name: "acao_is_fireman", type: :boolean, default: false, null: false}],
+    [ :must_have_column, {name: "acao_has_disability", type: :boolean, default: false, null: false}],
+    [ :must_have_column, {name: "acao_email_allowed", type: :boolean, default: false, null: false}],
+    [ :must_have_index, {columns: ["acao_code"], unique: true, name: "core_people_acao_code_idx"}],
+    [ :must_have_index, {columns: ["acao_ext_id"], unique: true, name: "index_core_people_on_acao_ext_id"}],
+  ]
+
+
+  has_many :acao_services,
+           class_name: '::Ygg::Acao::MemberService',
+           foreign_key: 'person_id'
+
+  has_many :acao_trailers,
+           class_name: '::Ygg::Acao::Trailer',
+           foreign_key: 'person_id'
+
   has_many :acao_licenses,
            class_name: '::Ygg::Acao::License'
 
   has_many :acao_medicals,
            class_name: '::Ygg::Acao::Medical'
-
-  belongs_to :acao_socio,
-             class_name: '::Ygg::Acao::MainDb::Socio',
-             primary_key: 'id_soci_dati_generale',
-             foreign_key: 'acao_ext_id',
-             optional: true
 
   has_many :acao_bar_transactions,
            class_name: '::Ygg::Acao::BarTransaction',
@@ -34,20 +58,23 @@ class Pilot < Ygg::Core::Person
            class_name: '::Ygg::Acao::TokenTransaction',
            foreign_key: 'person_id'
 
-  has_many :acao_trailers,
-           class_name: '::Ygg::Acao::Trailer',
-           foreign_key: 'person_id'
+  has_many :acao_aircrafts,
+           class_name: '::Ygg::Acao::Aircraft',
+           foreign_key: 'owner_id'
+
+  # Old DB
+  belongs_to :acao_socio,
+             class_name: '::Ygg::Acao::MainDb::Socio',
+             primary_key: 'id_soci_dati_generale',
+             foreign_key: 'acao_ext_id',
+             optional: true
+
 
   def self.active_members(time: Time.now)
-    years = [ time.year ]
-
-    # Consider members active up to 31-1 of the year
-    if (Time.now.beginning_of_year - Time.now) < 31.days
-      years << [ time.year - 1 ]
-    end
-
-    members = Ygg::Acao::Pilot.joins(:acao_memberships).where.not('acao_sleeping').
-                where('acao_memberships.year': years).group('core_people.id').order(id: :asc)
+    members = Ygg::Acao::Pilot.joins(:acao_memberships).
+                where.not('acao_sleeping').
+                where('acao_memberships.valid_from < ?', time).
+                where('acao_memberships.valid_to > ?', time)
 
     members
   end
@@ -70,7 +97,7 @@ class Pilot < Ygg::Core::Person
   def roster_entries_needed(year: Time.now.year)
     ym = Ygg::Acao::Year.find_by!(year: year)
 
-    membership = acao_memberships.find_by(year: year)
+    membership = acao_memberships.find_by(reference_year: ym)
     return nil if !membership
 
     needed = {
@@ -78,22 +105,18 @@ class Pilot < Ygg::Core::Person
       high_season: 1,
     }
 
-    if birth_date
-      age_on_renewal_day = compute_completed_years(birth_date, ym.renew_opening_time)
-
-      if age_on_renewal_day >= 65
-        needed[:total] = 0
-        needed[:high_season] = 0
-      elsif membership.board_member
-        needed[:total] = 1
-        needed[:high_season] = 0
-      elsif membership.tug_pilot
-        needed[:total] = 1
-        needed[:high_season] = 0
-      elsif membership.instructor
-        needed[:total] = 0
-        needed[:high_season] = 0
-      end
+    if birth_date && compute_completed_years(birth_date, ym.renew_opening_time) >= 65
+      needed[:total] = 0
+      needed[:high_season] = 0
+    elsif membership.board_member
+      needed[:total] = 1
+      needed[:high_season] = 0
+    elsif membership.tug_pilot
+      needed[:total] = 1
+      needed[:high_season] = 0
+    elsif membership.instructor
+      needed[:total] = 0
+      needed[:high_season] = 0
     end
 
     needed
@@ -153,7 +176,8 @@ class Pilot < Ygg::Core::Person
     end
 
     transaction do
-      sync_ml_voting_members!
+      sync_ml!(symbol: 'ACTIVE_MEMBERS', relation: active_members)
+      sync_ml!(symbol: 'VOTING_MEMBERS', relation: voting_members)
     end
 
     transaction do
@@ -201,14 +225,16 @@ class Pilot < Ygg::Core::Person
     when_in_advance_mail = 7.days - 10.hours
 
     acao_roster_entries.each do |entry|
-      if (entry.roster_day.date.beginning_of_day - when_in_advance_mail).between?(last_run, now)
+      if (entry.roster_day.date.beginning_of_day - when_in_advance_mail).between?(last_run, now) &&
+          entry.roster_day.date > now # Oops, too late
         Ygg::Ml::Msg::Email.notify(destinations: self, template: 'ROSTER_NEAR_NOTIFICATION', template_context: {
           first_name: first_name,
           date: entry.roster_day.date,
         })
       end
 
-      if (entry.roster_day.date.beginning_of_day - when_in_advance_sms).between?(last_run, now)
+      if (entry.roster_day.date.beginning_of_day - when_in_advance_sms).between?(last_run, now) &&
+         entry.roster_day.date > now # Oops, too late
         Ygg::Ml::Msg::SMS.notify(destinations: self, template: 'ROSTER_NEAR_NOTIFICATION_SMS', template_context: {
           first_name: first_name,
           date: entry.roster_day.date,
@@ -344,51 +370,16 @@ class Pilot < Ygg::Core::Person
 
   ########## Mailing lists synchronization
 
-  def self.sync_ml_active_members!(time: Time.now)
-    members = voting_members
+  def self.sync_ml!(symbol:, relation:, time: Time.now)
+    members = relation
 
-    list = Ygg::Ml::List.find_by!(symbol: 'ACTIVE_MEMBERS')
+    list = Ygg::Ml::List.find_by!(symbol: symbol)
     current_members = list.members.where(owner_type: 'Ygg::Core::Person').order(owner_id: :asc)
 
     merge(l: members, r: current_members,
       l_cmp_r: lambda { |l,r| l.id <=> r.owner_id },
       l_to_r: lambda { |l|
-        contact = l.contacts.where(type: 'email').first
-
-        if contact
-          addr = Ygg::Ml::Address.find_or_create_by(addr: contact.value, addr_type: 'EMAIL')
-          addr.name = l.name
-          addr.save!
-
-          list.members << Ygg::Ml::List::Member.new(
-            address: addr,
-            subscribed_on: Time.now,
-            owner: l,
-          )
-        end
-      },
-      r_to_l: lambda { |r|
-        r.destroy
-      },
-      lr_update: lambda { |l,r|
-        r.address.name = l.name
-        r.address.save!
-      },
-    )
-  end
-
-  def self.sync_ml_voting_members!(time: Time.now)
-    members = voting_members
-
-    list = Ygg::Ml::List.find_by!(symbol: 'VOTING_MEMBERS')
-    current_members = list.members.where(owner_type: 'Ygg::Core::Person').order(owner_id: :asc)
-
-    merge(l: members, r: current_members,
-      l_cmp_r: lambda { |l,r| l.id <=> r.owner_id },
-      l_to_r: lambda { |l|
-        contact = l.contacts.where(type: 'email').first
-
-        if contact
+        l.contacts.where(type: 'email').each do |contact|
           addr = Ygg::Ml::Address.find_or_create_by(addr: contact.value, addr_type: 'EMAIL')
           addr.name = l.name
           addr.save!
@@ -554,8 +545,8 @@ class Pilot < Ygg::Core::Person
 
         person.save!
 
-        person.acl_entries << Ygg::Core::Person::AclEntry.new(person: person, capability: 'owner')
-        person.person_capabilities.find_or_create_by(capability: Ygg::Core::Capability.find_by_name('simple_interface'))
+        person.acl_entries << Ygg::Core::Person::AclEntry.new(person: person, role: 'owner')
+        person.person_roles.find_or_create_by(global_role: Ygg::Core::GlobalRole.find_by_name('simple_interface'))
 
         person.send_welcome_message!
 
@@ -571,10 +562,10 @@ class Pilot < Ygg::Core::Person
 
         r.sync_from_maindb(l)
 
-        if r.deep_changed?
-          puts "UPDATING #{l.id_soci_dati_generale} <=> #{r.acao_ext_id} (#{r.first_name} #{r.last_name})"
-          puts r.deep_changes.awesome_inspect(plain: true)
-        end
+#        if r.deep_changed?
+#          puts "UPDATING #{l.id_soci_dati_generale} <=> #{r.acao_ext_id} (#{r.first_name} #{r.last_name})"
+#          puts r.deep_changes.awesome_inspect(plain: true)
+#        end
 
         r.save!
       })
@@ -857,20 +848,7 @@ class Pilot < Ygg::Core::Person
   end
 
   def self.voting_members(time: Time.now)
-    # Exclude students
-
-    years = [ time.year ]
-
-    # Consider members active up to 31-1 of the year
-    if (Time.now.beginning_of_year - Time.now) < 31.days
-      years << [ time.year - 1 ]
-    end
-
-    members = Ygg::Acao::Pilot.joins(:acao_memberships).where.not('acao_sleeping').
-                where('acao_memberships.year': years).
-                where('birth_date < ?', time.to_date - 18.years).group('core_people.id').order(id: :asc)
-
-    members
+    active_members.where('birth_date < ?', time.to_date - 18.years)
   end
 
 end

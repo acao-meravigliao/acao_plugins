@@ -13,6 +13,8 @@ class AircraftType::RestController < Ygg::Hel::RestController
 
   ar_controller_for AircraftType
 
+  load_role_defs!
+
 #  view :combo do
 #    empty!
 #    attribute(:id) { show! }

@@ -12,7 +12,7 @@ module Acao
 class ServiceType::RestController < Ygg::Hel::RestController
   ar_controller_for Ygg::Acao::ServiceType
 
-  load_capabilities!
+  load_role_defs!
 
   view :grid do
     empty!

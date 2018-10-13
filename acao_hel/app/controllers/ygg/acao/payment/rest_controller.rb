@@ -12,7 +12,7 @@ module Acao
 class Payment::RestController < Ygg::Hel::RestController
   ar_controller_for Ygg::Acao::Payment
 
-  load_capabilities!
+  load_role_defs!
 
   action :complete
 
@@ -33,25 +33,11 @@ class Payment::RestController < Ygg::Hel::RestController
       attribute(:last_name) { show! }
       attribute(:acao_code) { show! }
     end
-
-    attribute :payment_services do
-      show!
-      empty!
-      attribute(:price) { show! }
-    end
   end
 
   view :edit do
     self.with_perms = true
 
-    attribute :payment_services do
-      show!
-
-      attribute :service_type do
-        show!
-      end
-    end
-
     attribute :person do
       show!
       empty!
@@ -59,35 +45,10 @@ class Payment::RestController < Ygg::Hel::RestController
       attribute(:last_name) { show! }
       attribute(:handle) { show! }
       attribute(:italian_fiscal_code) { show! }
-    end
-
-    attribute :acl_entries do
-      show!
-      attribute :group do
-        show!
-        empty!
-        attribute(:name) { show! }
-      end
-      attribute :person do
-        show!
-        empty!
-        attribute(:first_name) { show! }
-        attribute(:last_name) { show! }
-        attribute(:handle) { show! }
-        attribute(:italian_fiscal_code) { show! }
-      end
     end
   end
 
   view :full do
-    attribute :payment_services do
-      show!
-
-      attribute :service_type do
-        show!
-      end
-    end
-
     attribute :person do
       show!
       empty!
@@ -96,6 +57,10 @@ class Payment::RestController < Ygg::Hel::RestController
       attribute(:handle) { show! }
       attribute(:italian_fiscal_code) { show! }
     end
+  end
+
+  build_member_roles(:blahblah) do |obj|
+     aaa_context.auth_person.id == obj.person_id ? [ :owner ] : []
   end
 
   def complete

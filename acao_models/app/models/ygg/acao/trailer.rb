@@ -13,30 +13,33 @@ module Acao
 class Trailer < Ygg::PublicModel
   self.table_name = 'acao_trailers'
 
-  belongs_to :person,
-             class_name: '::Ygg::Core::Person'
+  self.porn_migration += [
+    [ :must_have_column, { name: "id", type: :integer, null: false, limit: 4 } ],
+    [ :must_have_column, { name: "uuid", type: :uuid, default: nil, default_function: "gen_random_uuid()", null: false}],
+    [ :must_have_column, {name: "person_id", type: :integer, default: nil, limit: 4, null: false}],
+    [ :must_have_column, {name: "identifier", type: :string, default: nil, limit: 32, null: true}],
+    [ :must_have_column, {name: "zone", type: :string, default: nil, limit: 32, null: true}],
+    [ :must_have_column, {name: "aircraft_id", type: :integer, default: nil, limit: 4, null: true}],
+    [ :must_have_column, {name: "notes", type: :text, default: nil, null: true}],
+    [ :must_have_column, {name: "payment_id", type: :integer, default: nil, limit: 4, null: true}],
+    [ :must_have_index, {columns: ["uuid"], unique: true}],
+    [ :must_have_index, {columns: ["aircraft_id"], unique: false}],
+    [ :must_have_index, {columns: ["person_id"], unique: false}],
+    [ :must_have_index, {columns: ["identifier"], unique: true}],
+    [ :must_have_fk, {to_table: "acao_aircrafts", column: "aircraft_id", primary_key: "id", on_delete: nil, on_update: nil}],
+    [ :must_have_fk, {to_table: "core_people", column: "person_id", primary_key: "id", on_delete: nil, on_update: nil}],
+  ]
 
-  belongs_to :payment,
-             class_name: 'Ygg::Acao::Payment',
+  belongs_to :person,
+             class_name: '::Ygg::Core::Person',
+             optional: true
+
+  belongs_to :aircraft,
+             class_name: '::Ygg::Acao::Aircraft',
              optional: true
 
   include Ygg::Core::Loggable
   define_default_log_controller(self)
-
-  append_capabilities_for(:blahblah) do |aaa_context|
-     aaa_context.auth_person.id == person_id ? [ :owner ] : []
-  end
-
-#  has_acl
-#
-#  include Ygg::Core::Notifiable
-#
-#  def set_default_acl
-#    transaction do
-#      acl_entries.where(owner: self).destroy_all
-#      acl_entries << AclEntry.new(owner: self, person: person, capability: 'owner')
-#    end
-#  end
 
 end
 

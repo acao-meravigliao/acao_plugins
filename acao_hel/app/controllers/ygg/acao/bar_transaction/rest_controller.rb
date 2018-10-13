@@ -12,7 +12,7 @@ module Acao
 class BarTransaction::RestController < Ygg::Hel::RestController
   ar_controller_for Ygg::Acao::BarTransaction
 
-  load_capabilities!
+  load_role_defs!
 
   view :grid do
     empty!
@@ -43,6 +43,11 @@ class BarTransaction::RestController < Ygg::Hel::RestController
       attribute(:italian_fiscal_code) { show! }
     end
   end
+
+  build_member_roles(:blahblah) do |obj|
+     aaa_context.auth_person.id == obj.person_id ? [ :owner ] : []
+  end
+
 end
 
 end

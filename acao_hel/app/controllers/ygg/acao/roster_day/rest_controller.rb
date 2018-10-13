@@ -12,7 +12,7 @@ module Acao
 class RosterDay::RestController < Ygg::Hel::RestController
   ar_controller_for Ygg::Acao::RosterDay
 
-  load_capabilities!
+  load_role_defs!
 
   view :_default_ do
     attribute :roster_entries do

@@ -15,7 +15,6 @@ Ext.define('Extgui.Ygg.Acao.Payment.IndexPanel', {
     'Extgui.Ygg.Core.Person.ReferenceField',
   ],
 
-  title: 'Acao Payments',
   model: 'Ygg.Acao.Payment',
 
   storeConfig: {
@@ -27,7 +26,7 @@ Ext.define('Extgui.Ygg.Acao.Payment.IndexPanel', {
 
   columns: [
    {
-    dataIndex: 'code',
+    dataIndex: 'identifier',
     width: 80,
     filterable: true,
     searchable: true,
@@ -83,14 +82,13 @@ Ext.define('Extgui.Ygg.Acao.Payment.IndexPanel', {
     format: 'Y-m-d H:i',
    },
    {
-    width: 150,
-    header: 'Totale',
+    xtype: 'decimalcolumn',
+    dataIndex: 'amount',
+    width: 100,
+    tdCls: 'price',
+    fmtFixed: 2,
     align: 'right',
-    renderer: function(value, metaData, record, rowIndex, colIndex, store, view) {
-      var total = Big(0);
-      record.payment_services().each(function(item) { total = total.plus(item.get('price')); });
-      return total.toFixed(2) + ' €';
-    },
+    unit: '€',
    },
   ],
 

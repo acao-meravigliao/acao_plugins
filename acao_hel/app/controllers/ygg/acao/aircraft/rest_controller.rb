@@ -12,7 +12,7 @@ module Acao
 class Aircraft::RestController < Ygg::Hel::RestController
   ar_controller_for Ygg::Acao::Aircraft
 
-  skip_before_action :ensure_authenticated_and_authorized!, only: [ :index, :by_code ]
+  load_role_defs!
 
   def by_code
     if match = /([a-z]+):(.*)/.match(params[:id])
@@ -34,6 +34,10 @@ class Aircraft::RestController < Ygg::Hel::RestController
     else
       ar_respond_with({}, status: 404)
     end
+  end
+
+  build_member_roles(:blahblah) do |obj|
+     aaa_context.auth_person.id == obj.owner_id ? [ :owner ] : []
   end
 end
 

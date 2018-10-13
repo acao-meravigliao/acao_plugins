@@ -14,6 +14,7 @@ Ext.define('Extgui.Ygg.Acao.Membership.ObjectPanel', {
     'Extgui.form.field.DecimalNumber',
     'Extgui.form.field.DateTime',
     'Extgui.Ygg.Acao.Membership',
+    'Extgui.Ygg.Acao.Year.ReferenceField',
   ],
 
   extguiObject: 'Extgui.Ygg.Acao.Membership',
@@ -26,8 +27,8 @@ Ext.define('Extgui.Ygg.Acao.Membership.ObjectPanel', {
     layout: 'anchor',
     items: [
      {
-      xtype: 'textfield',
-      name: 'year',
+      xtype: 'acao_year',
+      name: 'reference_year',
      },
      {
       xtype: 'core_person',
@@ -36,6 +37,25 @@ Ext.define('Extgui.Ygg.Acao.Membership.ObjectPanel', {
      {
       xtype: 'textfield',
       name: 'status',
+      width: 400,
+     },
+     {
+      xtype: 'fieldcontainer',
+      fieldLabel: i18n('ygg.acao.membership.valid_from'),
+      items:
+       {
+        xtype: 'datetimefield',
+        name: 'valid_from',
+       },
+     },
+     {
+      xtype: 'fieldcontainer',
+      fieldLabel: i18n('ygg.acao.membership.valid_to'),
+      items:
+       {
+        xtype: 'datetimefield',
+        name: 'valid_to',
+       },
      },
      {
       xtype: 'checkboxfield',

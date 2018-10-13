@@ -12,11 +12,13 @@ module Acao
 class RosterEntry::RestController < Ygg::Hel::RestController
   ar_controller_for Ygg::Acao::RosterEntry
 
-  load_capabilities!
+  load_role_defs!
 
-  action :offer
-  action :offer_cancel
-  action :offer_accept
+  collection_action :status
+
+  member_action :offer
+  member_action :offer_cancel
+  member_action :offer_accept
 
   view :grid do
     empty!
@@ -48,6 +50,10 @@ class RosterEntry::RestController < Ygg::Hel::RestController
     end
   end
 
+  build_member_roles(:blahblah) do |obj|
+    aaa_context.auth_person.id == obj.person_id ? [ :owner ] : []
+  end
+
   def ar_apply_filter(rel, filter)
     if filter['today']
       (attr, path) = rel.nested_attribute('roster_day.date')
@@ -77,7 +83,7 @@ class RosterEntry::RestController < Ygg::Hel::RestController
       return
     end
 
-    membership = person.acao_memberships.find_by(year: renewal_year.year)
+    membership = person.acao_memberships.find_by(reference_year: renewal_year)
 
     needed_entries_present = nil
     needed_total = nil

@@ -48,7 +48,7 @@ Ext.define('Extgui.Ygg.Acao.MeterBus.IndexPanel', {
   actions: [
    {
     name: 'new',
-    i18nText: 'extgui.acao.meter_bus.index_panel.action.new:',
+    i18nText: 'extgui.acao.meter_bus.index_panel.action.new',
     iconCls: 'icon-add',
    }
   ],

@@ -30,6 +30,12 @@ class ModelsEngine < Rails::Engine
 
       has_many :acao_roster_entries,
                class_name: '::Ygg::Acao::RosterEntry'
+
+      has_many :acao_token_transactions,
+               class_name: '::Ygg::Acao::TokenTransaction'
+
+      has_many :acao_bar_transactions,
+               class_name: '::Ygg::Acao::BarTransaction'
     end
   end
 end

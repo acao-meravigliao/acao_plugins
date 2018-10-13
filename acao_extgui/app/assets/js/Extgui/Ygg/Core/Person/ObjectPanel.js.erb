@@ -1,0 +1,452 @@
+/*
+ * Copyright (C) 2008-2016, Daniele Orlandi
+ *
+ * Author:: Daniele Orlandi <daniele@orlandi.com>
+ *
+ * License:: You can redistribute it and/or modify it under the terms of the LICENSE file.
+ *
+ */
+
+Ext.define('Extgui.Ygg.Core.Person.ObjectPanel', {
+  extend: 'Extgui.object.panel.Base',
+  requires: [
+    'Extgui.Ygg.Core.Plugin',
+    'Extgui.Ygg.Core.Person',
+    'Extgui.Ygg.Core.Person.Contact.CollectionField',
+    'Extgui.Ygg.Core.Person.Role.CollectionField',
+    'Extgui.Ygg.Core.Person.Credential.CollectionField',
+    'Extgui.Ygg.Core.Person.MergeWindow',
+    'Extgui.toolbar.VSpacer',
+    'Extgui.Ygg.Core.Location.ReferenceField',
+    'Extgui.form.field.DecimalNumber',
+    'Ext.layout.container.Column',
+<%if defined? ShopExtgui %>
+    'Extgui.Ygg.Shop.BillingEntry',
+    'Extgui.Ygg.Shop.Invoice',
+    'Extgui.Ygg.Shop.PackageInstance.TreeForCustomer',
+    'Extgui.Ygg.Shop.BillingEntry.IndexPanelForCustomer',
+    'Extgui.Ygg.Shop.Invoice.IndexPanelForCustomer',
+    'Extgui.Ygg.Shop.Agreement.CollectionGridField',
+    'Extgui.Ygg.Shop.Reseller.ReferenceField',
+<%end%>
+  ],
+  extguiObject: 'Extgui.Ygg.Core.Person',
+
+  tabTitleTpl: 'Person<br />{first_name} {last_name}',
+  panelTitleTpl: '<h1><span class="name">Person </span><span class="value">{first_name} {last_name}</span></h1>',
+
+  destroyButton: true,
+  notificationsPanel: false,
+
+  tabs: [
+   {
+    xtype: 'panel',
+    title: i18n('extgui.ygg.core.person.object_panel.object_tab'),
+    padding: 10,
+    layout: 'column',
+    items: [
+     {
+      xtype: 'container',
+      columnWidth: .5,
+      minWidth: 400,
+      margin: '0 5 0 0',
+      layout: 'anchor',
+      items: [
+       {
+        xtype: 'displayfield',
+        name: 'handle',
+        width: 200,
+       },
+       {
+        xtype: 'textfield',
+        name: 'first_name',
+        anchor: '100%',
+       },
+       {
+        xtype: 'textfield',
+        name: 'middle_name',
+        anchor: '100%',
+       },
+       {
+        xtype: 'textfield',
+        name: 'last_name',
+        anchor: '100%',
+       },
+       {
+        xtype: 'textfield',
+        name: 'nickname',
+        anchor: '100%',
+       },
+       {
+        xtype: 'core_location',
+        name: 'residence_location',
+        minAccuracy: 5000,
+        anchor: '100%',
+        anchor: '100%',
+       },
+       {
+        xtype: 'combo',
+        name: 'gender',
+        editable: false,
+        store: [
+          [ 'M', i18n('ygg.core.person.gender.male') ],
+          [ 'F', i18n('ygg.core.person.gender.female') ],
+        ],
+        queryMode: 'local',
+       },
+       {
+        xtype: 'datefield',
+        name: 'birth_date',
+       },
+       {
+        xtype: 'core_location',
+        name: 'birth_location',
+        minAccuracy: 200000,
+        anchor: '100%',
+       },
+       {
+        xtype: 'textfield',
+        name: 'italian_fiscal_code',
+        width: 300,
+       },
+       {
+        xtype: 'textfield',
+        name: 'vat_number',
+        width: 300,
+       },
+       {
+        xtype: 'combo',
+        name: 'id_document_type',
+        store: [
+          [ 'ci', i18n('ygg.core.person.id_document_type.ci') ],
+          [ 'passport', i18n('ygg.core.person.id_document_type.passport') ],
+          [ 'id_card', i18n('ygg.core.person.id_document_type.id_card') ],
+        ],
+        queryMode: 'local',
+        width: 300,
+       },
+       {
+        xtype: 'textfield',
+        name: 'id_document_number',
+        width: 300,
+       },
+<%if defined? ShopExtgui %>
+       {
+        xtype: 'shop_reseller',
+        name: 'reseller_id',
+       },
+<%end%>
+       {
+        xtype: 'textarea',
+        name: 'notes',
+        anchor: '100%',
+        height: 120,
+       },
+      ],
+     },
+     {
+      xtype: 'container',
+      columnWidth: .5,
+      minWidth: 400,
+      items: [
+       {
+        xtype: 'fieldcontainer',
+        fieldLabel: i18n('ygg.core.person.contacts'),
+        items: {
+          xtype: 'core_person_contacts',
+          name: 'contacts',
+          anchor: '100%',
+          height: 200,
+        },
+       },
+       {
+        xtype: 'fieldcontainer',
+        fieldLabel: i18n('ygg.core.person.person_roles'),
+        items: {
+          xtype: 'core_person_roles',
+          name: 'person_roles',
+          height: 150,
+         },
+       },
+       {
+        xtype: 'fieldcontainer',
+        fieldLabel: i18n('ygg.core.person.credentials'),
+        items: {
+          xtype: 'core_person_credentials',
+          name: 'credentials',
+          height: 200,
+         },
+       },
+      ],
+     },
+    ],
+   },
+   {
+    xtype: 'panel',
+    title: i18n('extgui.ygg.acao.member.object_panel.object_tab'),
+    padding: 10,
+    items: [
+     {
+      xtype: 'checkboxfield',
+      name: 'acao_sleeping',
+     },
+     {
+      xtype: 'checkboxfield',
+      name: 'acao_roster_allowed',
+     },
+     {
+      xtype: 'checkboxfield',
+      name: 'acao_roster_chief',
+     },
+     {
+      xtype: 'checkboxfield',
+      name: 'acao_is_student',
+     },
+     {
+      xtype: 'checkboxfield',
+      name: 'acao_is_tug_pilot',
+     },
+     {
+      xtype: 'checkboxfield',
+      name: 'acao_is_board_member',
+     },
+     {
+      xtype: 'checkboxfield',
+      name: 'acao_is_instructor',
+     },
+     {
+      xtype: 'checkboxfield',
+      name: 'acao_is_fireman',
+     },
+     {
+      xtype: 'checkboxfield',
+      name: 'acao_has_disability',
+     },
+     {
+      xtype: 'decimalnumberfield',
+      name: 'acao_bar_credit',
+      acl: 'R',
+      unit: '€',
+     },
+     {
+      xtype: 'numberfield',
+      name: 'acao_bollini',
+      acl: 'R',
+     },
+    ],
+   },
+
+<%if defined? ShopExtgui %>
+   {
+    xtype: 'shop_package_instances_tree_for_customer',
+    name: 'package_instances',
+    padding: 0,
+   },
+   {
+    xtype: 'shop_billingentries_index_forcustomer',
+    name: 'billing_entries',
+    padding: 0,
+    navFilter: {},
+   },
+<%end%>
+   {
+    xtype: 'container',
+    title: i18n('extgui.ygg.core.person.form.invoicing'),
+    layout: 'anchor',
+    padding: 10,
+    items: [
+     {
+      xtype: 'core_location',
+      name: 'invoicing_location',
+      minAccuracy: 5000,
+      anchor: '100%',
+     },
+     {
+      xtype: 'datetimefield',
+      acl: 'R',
+      name: 'invoice_last',
+     },
+     {
+      xtype: 'numberfield',
+      spinner: true,
+      name: 'invoice_months',
+      minValue: 1,
+      maxValue: 12,
+     },
+     {
+      xtype: 'decimalnumberfield',
+      name: 'invoice_ceiling',
+      unit: '€',
+      minValue: 1,
+     },
+     {
+      xtype: 'decimalnumberfield',
+      name: 'invoice_floor',
+      unit: '€',
+      minValue: 1,
+     },
+    ]
+   },
+<%if defined? ShopExtgui %>
+   {
+    xtype: 'shop_invoices_index_forcustomer',
+    name: 'invoices',
+    padding: 0,
+    navFilter: {},
+   },
+<%end%>
+  ],
+
+  reports: [
+<%if defined? ShopExtgui %>
+   {
+    name: 'shop',
+    text: 'Shop summary',
+   },
+<%end%>
+   {
+    name: 'tech_sheet',
+    text: 'Technical Sheets',
+   },
+  ],
+
+  nav: [
+//   {
+//    text: 'Notifications',
+//    dataIndex: 'notifications_as_target',
+//   },
+<%if defined? ShopExtgui %>
+   {
+    text: 'Agreements',
+    dataIndex: 'agreements',
+   },
+<%end%>
+  ],
+
+  actions: [
+   { xtype: 'tbvspacer' },
+<%if defined? ShopExtgui %>
+   {
+    text: 'New Agreement...',
+    name: 'new_agreement',
+   },
+<%end%>
+   {
+    text: 'Merge...',
+    name: 'merge',
+   },
+<%if defined? ShopExtgui %>
+   { xtype: 'tbvspacer' },
+   {
+    text: 'Billing',
+    menu: {
+     xtype: 'menu',
+     items: [
+      { text: 'Invoice all pending', name: 'invoice_all_pending' },
+      { text: 'Flush billing', name: 'force_billing_flush' }
+     ],
+    },
+   },
+<%end%>
+  ],
+
+  specialActions: [
+   {
+    text: 'ACL Update',
+    name: 'update_acls',
+    isHelAction: true,
+   },
+  ],
+
+  initComponent: function() {
+    var me = this;
+
+    me.callParent(arguments);
+
+    me.actionsToolbar.down('menuitem[name=update_acls]').on('click', function() {
+      me.setLoading('Requesting...');
+      Extgui.AjaxJson.request({
+        url: me.getRecord().helUri() + '/update_acls',
+        method: 'POST',
+        jsonData: {},
+        callback: function() { me.setLoading(false); },
+        success: function(resp) {
+        },
+        failure: Extgui.ExceptionWindow.ajaxFailure,
+      });
+    });
+
+<%if defined? ShopExtgui %>
+    me.packageInstances = me.form.down('panel[name=package_instances]');
+    me.packageInstances.reload = function() {
+      me.setLoading('Loading...');
+      Ygg.Core.Person.load(me.getRecord().getId(), { params: { view: 'with_packages' }, success: function(record) {
+        me.setLoading(false);
+        me.packageInstances.setValue(record.package_instances());
+      }});
+    };
+
+    me.packageInstances.on('activate', function() {
+      me.packageInstances.reload();
+    });
+
+    me.billingEntries = me.form.down('panel[name=billing_entries]');
+    me.invoices = me.form.down('panel[name=invoices]');
+
+    me.form.on('recordloaded', function(record) {
+      me.billingEntries.setCustomer(record);
+      me.invoices.setCustomer(record);
+    });
+
+    me.actionsToolbar.down('button[name=new_agreement]').on('click', function() {
+      Extgui.app.getMainController().openUriWithConfig(
+        'extgui/ygg/shop/agreement/wizard_create_panel', { initialState: {
+          customer: { id: me.getRecord().getId(), type: 'Ygg.Core.Person' },
+          reseller_id: me.getRecord().get('reseller_id'),
+        } }
+      );
+    });
+<%end%>
+
+    me.actionsToolbar.down('button[name=merge]').on('click', function() {
+      var w = new Extgui.Ygg.Core.Person.MergeWindow({
+        record: me.getRecord(),
+      });
+
+      w.show();
+    });
+
+<%if defined? ShopExtgui %>
+    me.billingInvoiceAllPending = me.actionsToolbar.down('menuitem[name=invoice_all_pending]');
+    if (me.billingInvoiceAllPending) {
+      me.billingInvoiceAllPending.on('click', function() {
+        me.performBillingOperation('invoice_all_pending');
+      });
+    }
+
+    me.billingForceBillingFlush = me.actionsToolbar.down('menuitem[name=force_billing_flush]');
+    if (me.billingForceBillingFlush) {
+      me.billingForceBillingFlush.on('click', function() {
+        me.performBillingOperation('force_billing_flush');
+      });
+    }
+<%end%>
+
+  },
+
+  performBillingOperation: function(action) {
+    var me = this;
+    me.setLoading('Billing operation ' + action + '...');
+    Extgui.AjaxJson.request({
+      url: me.getRecord().helUri() + '/' + action,
+      method: 'POST',
+      jsonData: {},
+      callback: function() { me.setLoading(false); },
+      success: function(resp) {
+        me.refresh();
+      },
+      failure: Extgui.ExceptionWindow.ajaxFailure,
+    });
+  },
+
+});

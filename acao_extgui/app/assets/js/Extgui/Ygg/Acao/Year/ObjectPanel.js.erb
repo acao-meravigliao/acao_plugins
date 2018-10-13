@@ -30,8 +30,22 @@ Ext.define('Extgui.Ygg.Acao.Year.ObjectPanel', {
       name: 'year',
      },
      {
-      xtype: 'datetimefield',
-      name: 'renew_opening_time',
+      xtype: 'fieldcontainer',
+      fieldLabel: i18n('ygg.acao.year.renew_announce_time'),
+      items:
+       {
+        xtype: 'datetimefield',
+        name: 'renew_announce_time',
+       },
+     },
+     {
+      xtype: 'fieldcontainer',
+      fieldLabel: i18n('ygg.acao.year.renew_opening_time'),
+      items:
+       {
+        xtype: 'datetimefield',
+        name: 'renew_opening_time',
+       },
      },
     ],
    },

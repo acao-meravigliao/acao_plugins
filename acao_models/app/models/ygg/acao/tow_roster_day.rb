@@ -12,8 +12,21 @@ module Acao
 class TowRosterDay < Ygg::PublicModel
   self.table_name = 'acao_tow_roster_days'
 
+  self.porn_migration += [
+    [ :must_have_column, { name: "id", type: :integer, null: false, limit: 4 } ],
+    [ :must_have_column, { name: "uuid", type: :uuid, default: nil, default_function: "gen_random_uuid()", null: false}],
+    [ :must_have_column, {name: "date", type: :date, default: nil, null: false}],
+    [ :must_have_column, {name: "needed_people", type: :integer, default: 4, limit: 4, null: false}],
+    [ :must_have_column, {name: "descr", type: :string, default: nil, null: true}],
+    [ :must_have_index, {columns: ["uuid"], unique: true}],
+    [ :must_have_index, {columns: ["date"], unique: true}],
+  ]
+
   has_many :roster_entries,
            class_name: 'Ygg::Acao::TowRosterEntry'
+
+  include Ygg::Core::Loggable
+  define_default_log_controller(self)
 
 #  def self.init_for_year(year: Time.now.year)
 #

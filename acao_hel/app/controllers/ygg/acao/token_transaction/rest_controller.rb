@@ -12,6 +12,8 @@ module Acao
 class TokenTransaction::RestController < Ygg::Hel::RestController
   ar_controller_for Ygg::Acao::TokenTransaction
 
+  load_role_defs!
+
   view :grid do
     empty!
     attribute(:id) { show! }
@@ -39,6 +41,10 @@ class TokenTransaction::RestController < Ygg::Hel::RestController
       attribute(:handle) { show! }
       attribute(:italian_fiscal_code) { show! }
     end
+  end
+
+  build_member_roles(:blahblah) do |obj|
+     aaa_context.auth_person.id == obj.person_id ? [ :owner ] : []
   end
 end
 

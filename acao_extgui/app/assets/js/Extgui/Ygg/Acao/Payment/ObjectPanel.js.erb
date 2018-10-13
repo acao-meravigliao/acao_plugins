@@ -15,7 +15,6 @@ Ext.define('Extgui.Ygg.Acao.Payment.ObjectPanel', {
     'Extgui.form.field.DateTime',
     'Extgui.Ygg.Acao.Payment',
     'Extgui.Ygg.Core.Person.ReferenceField',
-    'Extgui.Ygg.Acao.Payment.Service.CollectionGridField',
   ],
 
   extguiObject: 'Extgui.Ygg.Acao.Payment',
@@ -33,7 +32,7 @@ Ext.define('Extgui.Ygg.Acao.Payment.ObjectPanel', {
      },
      {
       xtype: 'textfield',
-      name: 'code',
+      name: 'identifier',
      },
      {
       xtype: 'textfield',
@@ -74,13 +73,6 @@ Ext.define('Extgui.Ygg.Acao.Payment.ObjectPanel', {
          xtype: 'datetimefield',
          name: 'completed_at',
         },
-     },
-     {
-      xtype: 'acao_payment_services_grid',
-      name: 'payment_services',
-      height: 200,
-      anchor: '100%',
-      maxWidth: 1000,
      },
      {
       xtype: 'textarea',

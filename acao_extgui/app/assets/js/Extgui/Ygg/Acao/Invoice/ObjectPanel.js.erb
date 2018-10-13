@@ -1,0 +1,101 @@
+/*
+ * Copyright (C) 2017-2017, Daniele Orlandi
+ *
+ * Author:: Daniele Orlandi <daniele@orlandi.com>
+ *
+ * License:: You can redistribute it and/or modify it under the terms of the LICENSE file.
+ *
+ */
+
+Ext.define('Extgui.Ygg.Acao.Invoice.ObjectPanel', {
+  extend: 'Extgui.object.panel.Base',
+  requires: [
+    'Extgui.Ygg.Acao.Plugin',
+    'Extgui.form.field.DecimalNumber',
+    'Extgui.form.field.DateTime',
+    'Extgui.Ygg.Acao.Invoice',
+    'Extgui.Ygg.Acao.Payment',
+    'Extgui.Ygg.Core.Person.ReferenceField',
+    'Extgui.Ygg.Acao.Invoice.Detail.CollectionGridField',
+  ],
+
+  extguiObject: 'Extgui.Ygg.Acao.Invoice',
+
+  tabs: [
+   {
+    xtype: 'panel',
+    title: i18n('extgui.ygg.acao.invoice.object_panel.object_tab'),
+    padding: 10,
+    layout: 'anchor',
+    items: [
+     {
+      xtype: 'textfield',
+      name: 'identifier',
+     },
+     {
+      xtype: 'core_person',
+      name: 'person_id',
+     },
+     {
+      xtype: 'textfield',
+      name: 'first_name',
+      acl: 'R',
+     },
+     {
+      xtype: 'textfield',
+      name: 'last_name',
+      acl: 'R',
+     },
+     {
+      xtype: 'textfield',
+      name: 'address',
+      acl: 'R',
+     },
+     {
+      xtype: 'textfield',
+      name: 'payment_method',
+     },
+     {
+      xtype: 'fieldcontainer',
+      fieldLabel: i18n('ygg.acao.invoice.created_at'),
+      items:
+        {
+         xtype: 'datetimefield',
+         name: 'created_at',
+        },
+     },
+     {
+      xtype: 'acao_invoice_details_grid',
+      name: 'details',
+      height: 400,
+      anchor: '100%',
+      maxWidth: 1000,
+     },
+     {
+      xtype: 'textarea',
+      name: 'notes',
+      anchor: '100%',
+      height: 200,
+      maxWidth: 1000,
+      labelAlign: 'top',
+     },
+    ],
+   },
+  ],
+
+  actions: [
+  ],
+
+  nav: [
+   {
+    text: 'Destinatario',
+    dataIndex: 'person',
+   },
+   {
+    text: 'Pagamenti',
+    dataIndex: 'payments',
+   },
+  ],
+
+  reports: [],
+});

@@ -15,6 +15,29 @@ module Acao
 class Aircraft < Ygg::PublicModel
   self.table_name = 'acao_aircrafts'
 
+  self.porn_migration += [
+    [ :must_have_column, { name: "id", type: :integer, null: false, limit: 4 } ],
+    [ :must_have_column, { name: "uuid", type: :uuid, default: nil, default_function: "gen_random_uuid()", null: false}],
+    [ :must_have_column, {name: "aircraft_type_id", type: :integer, default: nil, limit: 4, null: true}],
+    [ :must_have_column, {name: "owner_id", type: :integer, default: nil, limit: 4, null: true}],
+    [ :must_have_column, {name: "race_registration", type: :string, default: nil, limit: 255, null: true}],
+    [ :must_have_column, {name: "registration", type: :string, default: nil, limit: 255, null: true}],
+    [ :must_have_column, {name: "fn_owner_name", type: :string, default: nil, limit: 255, null: true}],
+    [ :must_have_column, {name: "fn_home_airport", type: :string, default: nil, limit: 255, null: true}],
+    [ :must_have_column, {name: "fn_type_name", type: :string, default: nil, limit: 255, null: true}],
+    [ :must_have_column, {name: "fn_common_radio_frequency", type: :string, default: nil, limit: 255, null: true}],
+    [ :must_have_column, {name: "flarm_identifier", type: :string, default: nil, limit: 16, null: true}],
+    [ :must_have_column, {name: "icao_identifier", type: :string, default: nil, limit: 16, null: true}],
+    [ :must_have_column, {name: "hangar", type: :boolean, default: false, null: false}],
+    [ :must_have_column, {name: "notes", type: :text, default: nil, null: true}],
+    [ :must_have_index, {columns: ["uuid"], unique: true}],
+    [ :must_have_index, {columns: ["flarm_identifier"], unique: true}],
+    [ :must_have_index, {columns: ["icao_identifier"], unique: true}],
+    [ :must_have_index, {columns: ["registration"], unique: false}],
+    [ :must_have_fk, {to_table: "acao_aircraft_types", column: "aircraft_type_id", primary_key: "id", on_delete: nil, on_update: nil}],
+    [ :must_have_fk, {to_table: "core_people", column: "owner_id", primary_key: "id", on_delete: nil, on_update: nil}],
+  ]
+
   has_many :trackers,
            class_name: 'Ygg::Acao::Tracker'
 
@@ -28,6 +51,9 @@ class Aircraft < Ygg::PublicModel
 
   has_many :flights,
            class_name: 'Ygg::Acao::Flight'
+
+  include Ygg::Core::Loggable
+  define_default_log_controller(self)
 
   def self.import_flarmnet_db!
     flarmnet_db = Hash[open('http://www.flarmnet.org/files/data.fln', 'r').read.lines[1..-1].map { |x|

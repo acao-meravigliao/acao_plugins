@@ -43,6 +43,19 @@ Ext.define('Extgui.Ygg.Acao.AircraftType.IndexPanel', {
     searchable: true,
    },
    {
+    dataIndex: 'aircraft_class',
+    width: 200,
+    filterable: true,
+    searchable: true,
+   },
+   {
+    xtype: 'numbercolumn',
+    dataIndex: 'wingspan',
+    width: 100,
+    unit: 'm',
+    filterable: true,
+   },
+   {
     xtype: 'numbercolumn',
     dataIndex: 'handicap',
     width: 100,

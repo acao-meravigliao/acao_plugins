@@ -12,6 +12,8 @@ module Acao
 class Flight::RestController < Ygg::Hel::RestController
   ar_controller_for Ygg::Acao::Flight
 
+  load_role_defs!
+
   view :grid do
     empty!
     attribute(:id) { show! }
@@ -49,6 +51,16 @@ class Flight::RestController < Ygg::Hel::RestController
     attribute(:pilot2) do
       show!
     end
+  end
+
+  build_member_roles(:blahblah) do |obj|
+     roles = []
+     pid = aaa_context.auth_person.id
+
+     roles << :pilot1 if pid == obj.pilot1_id
+     roles << :pilot2 if pid == obj.pilot2_id
+     roles << :tow_pilot if obj.towed_by && pid == obj.towed_by.pilot1_id
+     roles
   end
 end
 

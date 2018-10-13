@@ -12,6 +12,28 @@ module Acao
 class Payment::SatispayCharge < Ygg::PublicModel
   self.table_name = 'acao_payment_satispay_charges'
 
+  self.porn_migration += [
+    [ :must_have_column, { name: "id", type: :integer, null: false, limit: 4 } ],
+    [ :must_have_column, { name: "uuid", type: :uuid, default: nil, default_function: "gen_random_uuid()", null: false}],
+    [ :must_have_column, {name: "payment_id", type: :integer, default: nil, limit: 4, null: true}],
+    [ :must_have_column, {name: "charge_id", type: :string, default: nil, limit: 64, null: true}],
+    [ :must_have_column, {name: "user_id", type: :string, default: nil, limit: 64, null: true}],
+    [ :must_have_column, {name: "user_phone_number", type: :string, default: nil, limit: 64, null: true}],
+    [ :must_have_column, {name: "status", type: :string, default: nil, limit: 64, null: true}],
+    [ :must_have_column, {name: "status_details", type: :string, default: nil, null: true}],
+    [ :must_have_column, {name: "user_short_name", type: :string, default: nil, null: true}],
+    [ :must_have_column, {name: "charge_date", type: :datetime, default: nil, null: true}],
+    [ :must_have_column, {name: "amount", type: :decimal, default: nil, precision: 8, scale: 2, null: true}],
+    [ :must_have_column, {name: "idempotency_key", type: :string, default: nil, limit: 32, null: true}],
+    [ :must_have_column, {name: "description", type: :string, default: nil, null: true}],
+    [ :must_have_index, {columns: ["uuid"], unique: true}],
+    [ :must_have_index, {columns: ["charge_id"], unique: true}],
+    [ :must_have_index, {columns: ["payment_id"], unique: false}],
+    [ :must_have_index, {columns: ["user_id"], unique: false}],
+    [ :must_have_index, {columns: ["user_phone_number"], unique: false}],
+    [ :must_have_fk, {to_table: "acao_payments", column: "payment_id", primary_key: "id", on_delete: nil, on_update: nil}],
+  ]
+
   belongs_to :payment,
              class_name: 'Ygg::Acao::Payment'
 
