@@ -37,7 +37,7 @@ class Pilot < Ygg::Core::Person
 
 
   has_many :acao_services,
-           class_name: '::Ygg::Acao::MemberService',
+           class_name: '::Ygg::Acao::Member::Service',
            foreign_key: 'person_id'
 
   has_many :acao_trailers,

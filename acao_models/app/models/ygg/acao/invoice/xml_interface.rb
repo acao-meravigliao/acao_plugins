@@ -11,7 +11,7 @@ require 'roxml'
 module Ygg
 module Acao
 
-class Payment::XMLInterface
+class Invoice::XMLInterface
   class Base
     include ROXML
 

@@ -6,6 +6,8 @@
 # License:: You can redistribute it and/or modify it under the terms of the LICENSE file.
 #
 
+Ygg::Acao::RosterEntry
+
 module Ygg
 module Acao
 

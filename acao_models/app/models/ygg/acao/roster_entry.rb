@@ -16,7 +16,7 @@ class RosterEntry < Ygg::PublicModel
     [ :must_have_column, { name: "id", type: :integer, null: false, limit: 4 } ],
     [ :must_have_column, { name: "uuid", type: :uuid, default: nil, default_function: "gen_random_uuid()", null: false}],
     [ :must_have_column, {name: "person_id", type: :integer, default: nil, limit: 4, null: false}],
-    [ :must_have_column, {name: "chief", type: :boolean, default: nil, null: false}],
+    [ :must_have_column, {name: "chief", type: :boolean, default: false, null: false}],
     [ :must_have_column, {name: "notes", type: :text, default: nil, null: true}],
     [ :must_have_column, {name: "roster_day_id", type: :integer, default: nil, limit: 4, null: false}],
     [ :must_have_column, {name: "uuid", type: :uuid, default: nil, default_function: "gen_random_uuid()", null: false}],

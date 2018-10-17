@@ -20,6 +20,7 @@ class Invoice < Ygg::PublicModel
     [ :must_have_column, {name: "last_name", type: :string, default: nil, limit: 255, null: true}],
     [ :must_have_column, {name: "address", type: :string, default: nil, limit: 255, null: true}],
     [ :must_have_column, {name: "created_at", type: :datetime, default: nil, null: true}],
+    [ :must_have_column, {name: "state", type: :string, default: 'NEW', null: false}],
     [ :must_have_column, {name: "notes", type: :text, default: nil, null: true}],
     [ :must_have_column, {name: "payment_method", type: :string, default: nil, limit: 32, null: false}],
     [ :must_have_column, {name: "last_chore", type: :datetime, default: nil, null: true}],
@@ -30,6 +31,31 @@ class Invoice < Ygg::PublicModel
   ]
 
   has_meta_class
+
+  # TO BE REMOVED WHEN ALL IDs are UUIDs
+  has_many :readables,
+           class_name: 'Ygg::Core::ReadableUuid',
+           as: :obj
+
+  def self.readables_relation(aaa_context)
+    transaction do
+      rdbl = Ygg::Core::Readable.where(obj_type: self.name, person: aaa_context.auth_person)
+      if !rdbl.first || rdbl.first.created_at < (Time.now - 1.hour)
+
+        rdbl.destroy_all
+
+        all.each do |x|
+          if x.ar_guess_controller.new(aaa_context: aaa_context).ar_member_action_allowed?(x, [ :show, :index ])
+            Ygg::Core::Readable.create!(obj: x, person: aaa_context.auth_person)
+          end
+        end
+      end
+    end
+
+    joins(:readables).where(core_readables_uuid: { person_id: aaa_context.auth_person.id })
+  end
+  ########################################### ^^^^^^^^^
+
 
   belongs_to :person,
              class_name: 'Ygg::Core::Person'
@@ -72,6 +98,29 @@ class Invoice < Ygg::PublicModel
   end
 
   def close!
+    self.state = 'CLOSED'
+    save!
+  end
+
+  def one_payment_has_been_completed!(payment)
+    if payments.all? { |x| x.state == 'COMPLETED' }
+      paid_in_full!
+    else
+      self.state = 'PARTIALLY_PAID'
+      save!
+    end
+  end
+
+  def paid_in_full!
+    self.state = 'PAID_IN_FULL'
+    save!
+
+    details.all.each do |detail|
+      detail.membership.payment_completed!  if detail.membership
+      detail.member_service.payment_completed!  if detail.member_service
+    end
+
+    export_to_onda!
   end
 
   def generate_payment!(reason: "Pagamento fattura", timeout: 10.days)
@@ -86,25 +135,22 @@ class Invoice < Ygg::PublicModel
     )
   end
 
-
-  def self.run_chores!
-    all.each do |invoice|
-      invoice.run_chores!
-    end
-  end
-
-  def run_chores!
-    transaction do
-      now = Time.now
-      last_run = last_chore || Time.new(0)
-
-
-
-      self.last_chore = now
-
-      save!
-    end
-  end
+#  def self.run_chores!
+#    all.each do |invoice|
+#      invoice.run_chores!
+#    end
+#  end
+#
+#  def run_chores!
+#    transaction do
+#      now = Time.now
+#      last_run = last_chore || Time.new(0)
+#
+#      self.last_chore = now
+#
+#      save!
+#    end
+#  end
 
   PAYMENT_METHOD_MAP = {
     'WIRE'      => 'BB',
@@ -326,6 +372,14 @@ class Invoice < Ygg::PublicModel
     belongs_to :service_type,
                class_name: '::Ygg::Acao::ServiceType',
                optional: true
+
+    has_one :membership,
+            class_name: '::Ygg::Acao::Membership',
+            foreign_key: 'invoice_detail_id'
+
+    has_one :member_service,
+            class_name: '::Ygg::Acao::Member::Service',
+            foreign_key: 'invoice_detail_id'
 
     has_meta_class
 

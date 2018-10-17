@@ -81,24 +81,14 @@ class Payment < Ygg::PublicModel
     self.state = 'COMPLETED'
     self.completed_at = Time.now
 
-# FIXME
-    if membership
-      membership.payment_completed!
-      membership.save!
-    end
-
-    unless no_autoinvoice
-      export_invoice!
-    end
+    invoice.one_payment_has_been_completed!(self) if invoice
+    save!
 
     Ygg::Ml::Msg.notify(destinations: person, template: 'PAYMENT_COMPLETED', template_context: {
       first_name: person.first_name,
       code: identifier,
     }, objects: self)
-
-    save!
   end
-
 
   def self.run_chores!
     all.each do |payment|

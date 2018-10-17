@@ -15,6 +15,7 @@ class Flight < Ygg::PublicModel
   self.porn_migration += [
     [ :must_have_column, { name: "id", type: :integer, null: false, limit: 4 } ],
     [ :must_have_column, { name: "uuid", type: :uuid, default: nil, default_function: "gen_random_uuid()", null: false}],
+    [ :must_have_column, {name: "aircraft_reg", type: :string, default: nil, null: false}],
     [ :must_have_column, {name: "aircraft_id", type: :integer, default: nil, limit: 4, null: false}],
     [ :must_have_column, {name: "takeoff_time", type: :datetime, default: nil, null: true}],
     [ :must_have_column, {name: "landing_time", type: :datetime, default: nil, null: true}],
@@ -236,6 +237,7 @@ class Flight < Ygg::PublicModel
   end
 
   def sync_from_maindb_as_gl(other)
+    self.aircraft_reg = other.marche_aliante.strip.upcase
     self.aircraft = Ygg::Acao::Aircraft.find_or_create_by!(registration: other.marche_aliante.strip.upcase)
 
     self.takeoff_time = other.ora_decollo_aereo
@@ -254,6 +256,9 @@ class Flight < Ygg::PublicModel
 
     self.takeoff_location = takeoff_airfield.location if takeoff_airfield
     self.landing_location = landing_airfield.location if landing_airfield
+
+    self.takeoff_location_raw = takeoff_airfield ? takeoff_airfield.name : other.dep.strip.upcase
+    self.landing_location_raw = landing_airfield ? landing_airfield.name : other.arr.strip.upcase
 
     begin
       self.pilot1 = Ygg::Acao::Pilot.find_by!(acao_code: other.codice_pilota_aliante)

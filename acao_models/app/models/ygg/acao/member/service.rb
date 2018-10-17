@@ -43,6 +43,9 @@ class Member::Service < Ygg::PublicModel
 
   include Ygg::Core::Loggable
   define_default_log_controller(self)
+
+  def payment_completed!
+  end
 end
 
 end

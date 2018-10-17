@@ -14,7 +14,7 @@ class Payment::RestController < Ygg::Hel::RestController
 
   load_role_defs!
 
-  action :complete
+  member_action :complete
 
   view :grid do
     empty!
@@ -22,6 +22,7 @@ class Payment::RestController < Ygg::Hel::RestController
     attribute(:uuid) { show! }
     attribute(:code) { show! }
     attribute(:state) { show! }
+    attribute(:amount) { show! }
     attribute(:created_at) { show! }
     attribute(:expires_at) { show! }
     attribute(:completed_at) { show! }
