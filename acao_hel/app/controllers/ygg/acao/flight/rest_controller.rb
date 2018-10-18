@@ -22,6 +22,7 @@ class Flight::RestController < Ygg::Hel::RestController
     attribute(:landing_time) { show! }
     attribute(:takeoff_location_raw) { show! }
     attribute(:landing_location_raw) { show! }
+    attribute(:aircraft_reg) { show! }
     attribute(:aircraft) do
       empty!
       attribute(:registration) { show! }

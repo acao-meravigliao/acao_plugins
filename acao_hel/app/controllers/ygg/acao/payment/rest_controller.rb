@@ -20,7 +20,7 @@ class Payment::RestController < Ygg::Hel::RestController
     empty!
     attribute(:id) { show! }
     attribute(:uuid) { show! }
-    attribute(:code) { show! }
+    attribute(:identifier) { show! }
     attribute(:state) { show! }
     attribute(:amount) { show! }
     attribute(:created_at) { show! }

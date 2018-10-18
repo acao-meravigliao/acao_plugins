@@ -11,6 +11,8 @@ module Acao
 
 class Airfield::RestController < Ygg::Hel::RestController
   ar_controller_for Ygg::Acao::Airfield
+
+  load_role_defs!
 end
 
 end

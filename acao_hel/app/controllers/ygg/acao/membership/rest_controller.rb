@@ -155,7 +155,7 @@ class Membership::RestController < Ygg::Hel::RestController
     end
 
     render(json: {
-      payment_id: membership.payment.id,
+      payment_id: membership.invoice_detail.invoice.payments.first.id,
     })
   end
 end

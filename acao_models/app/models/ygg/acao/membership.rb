@@ -201,6 +201,13 @@ class Membership < Ygg::PublicModel
 
     # Done! -------------
 
+    # FIXME: implement better cacheing
+    Ygg::Acao::Invoice.readables_clear_cache(person_id: person.id)
+    Ygg::Acao::Invoice::Detail.readables_clear_cache(person_id: person.id)
+    Ygg::Acao::Payment.readables_clear_cache(person_id: person.id)
+    Ygg::Acao::Membership.readables_clear_cache(person_id: person.id)
+    Ygg::Acao::Member::Service.readables_clear_cache(person_id: person.id)
+
     invoice.close!
     payment = invoice.generate_payment!(
       reason: "rinnovo associazione, codice pilota #{person.acao_code}",
