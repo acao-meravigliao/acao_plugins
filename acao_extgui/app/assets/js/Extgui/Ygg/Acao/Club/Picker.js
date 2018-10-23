@@ -7,21 +7,21 @@
  *
  */
 
-Ext.define('Extgui.Ygg.Acao.Medical.Picker', {
+Ext.define('Extgui.Ygg.Acao.Club.Picker', {
   extend: 'Extgui.object.Picker',
   requires: [
     'Extgui.Ygg.Acao.Plugin',
-    'Extgui.Ygg.Acao.Medical',
-    'Extgui.Ygg.Acao.Medical.View',
+    'Extgui.Ygg.Acao.Club',
+    'Extgui.Ygg.Acao.Club.View',
   ],
-  alias: 'widget.acao_medical_picker',
+  alias: 'widget.acao_club_picker',
 
-  extguiObject: 'Extgui.Ygg.Acao.Medical',
+  extguiObject: 'Extgui.Ygg.Acao.Club',
 
-  searchIn: [ 'medical' ],
-  defaultSortField: 'medical',
+  searchIn: [ 'name' ],
+  defaultSortField: 'name',
   sortFields: [
-    { label: 'Identifier', field: 'identifier' },
+    { label: 'Name', field: 'name' },
   ],
 });
 

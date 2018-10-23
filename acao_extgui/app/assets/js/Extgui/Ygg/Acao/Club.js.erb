@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2017, Daniele Orlandi
+ * Copyright (C) 2014-2017, Daniele Orlandi
  *
  * Author:: Daniele Orlandi <daniele@orlandi.com>
  *
@@ -7,15 +7,15 @@
  *
  */
 
-Ext.define('Extgui.Ygg.Acao.Member', {
+Ext.define('Extgui.Ygg.Acao.Club', {
   extend: 'Extgui.object.Base',
   requires: [
     'Extgui.Ygg.Acao.Plugin',
-    'Ygg.Acao.Member',
+    'Ygg.Acao.Club',
   ],
   singleton: true,
 
   subTpl: [
-    '<span class="name">{first_name} {last_name}</span><br />{type}',
+    '<span class="name">{name}</span><br />',
   ],
 });

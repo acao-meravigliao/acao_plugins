@@ -43,6 +43,13 @@ class Membership::RestController < Ygg::Hel::RestController
       attribute(:year) { show! }
     end
 
+    attribute(:invoice_detail) do
+      show!
+      attribute(:invoice) do
+        show!
+      end
+    end
+
     attribute :acl_entries do
       show!
       attribute :group do
@@ -59,6 +66,10 @@ class Membership::RestController < Ygg::Hel::RestController
         attribute(:italian_fiscal_code) { show! }
       end
     end
+  end
+
+  def authorization_prefilter
+    ar_model.where(person_id: aaa_context.auth_person.id)
   end
 
   build_member_roles(:blahblah) do |obj|

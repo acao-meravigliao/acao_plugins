@@ -15,6 +15,7 @@ Ext.define('Extgui.Ygg.Acao.Membership.ObjectPanel', {
     'Extgui.form.field.DateTime',
     'Extgui.Ygg.Acao.Membership',
     'Extgui.Ygg.Acao.Year.ReferenceField',
+    'Extgui.Ygg.Acao.Invoice',
   ],
 
   extguiObject: 'Extgui.Ygg.Acao.Membership',
@@ -82,6 +83,15 @@ Ext.define('Extgui.Ygg.Acao.Membership.ObjectPanel', {
   ],
 
   nav: [
+   { dataIndex: 'person', },
+   {
+    i18nText: 'ygg.acao.invoice',
+    handler: function() {
+      var me = this;
+      me.fireEvent('openuri', me.getRecord().getinvoice_detail().getinvoice().extguiUri());
+    }
+   },
+
   ],
 
   reports: [],

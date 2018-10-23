@@ -7,15 +7,17 @@
  *
  */
 
-Ext.define('Extgui.Ygg.Acao.Medical.IndexPanel', {
+Ext.define('Extgui.Ygg.Acao.MemberService.IndexPanel', {
   extend: 'Extgui.object.index.GridPanelBase',
   requires: [
     'Extgui.Ygg.Acao.Plugin',
-    'Ygg.Acao.Medical',
+    'Ygg.Acao.MemberService',
     'Extgui.Ygg.Core.Person',
+    'Extgui.Ygg.Acao.ServiceType',
+    'Extgui.Ygg.Acao.Payment',
   ],
 
-  model: 'Ygg.Acao.Medical',
+  model: 'Ygg.Acao.MemberService',
 
   storeConfig: {
     sorters: {
@@ -27,44 +29,46 @@ Ext.define('Extgui.Ygg.Acao.Medical.IndexPanel', {
   columns: [
    {
     xtype: 'stringtemplatecolumn',
-    tpl: '{pilot.first_name} {pilot.last_name}',
-    dataIndex: 'pilot',
+    tpl: '{person.first_name} {person.last_name}',
+    dataIndex: 'person',
     searchable: true,
-    searchIn: [ 'pilot.first_name', 'pilot.last_name' ],
+    searchIn: [ 'person.first_name', 'person.last_name' ],
     width: 250,
    },
    {
-    dataIndex: 'type',
-    width: 200,
-    filterable: true,
+    xtype: 'stringtemplatecolumn',
+    tpl: '{service_type.name}',
+    dataIndex: 'service_type',
     searchable: true,
+    searchIn: [ 'servie_type.name' ],
+    width: 250,
    },
    {
-    dataIndex: 'identifier',
-    width: 200,
-    filterable: true,
+    xtype: 'stringtemplatecolumn',
+    tpl: '{payment.identifier}',
+    dataIndex: 'payment',
     searchable: true,
+    searchIn: [ 'payment.identifier' ],
+    width: 250,
    },
    {
     xtype: 'datecolumn',
-    dataIndex: 'issued_at',
+    dataIndex: 'valid_from',
     width: 200,
     filterable: true,
-    searchable: true,
    },
    {
     xtype: 'datecolumn',
     dataIndex: 'valid_to',
     width: 200,
     filterable: true,
-    searchable: true,
    },
   ],
 
   actions: [
    {
     name: 'new',
-    i18nText: 'extgui.acao.medical.index_panel.action.new',
+    i18nText: 'extgui.acao.member.service.index_panel.action.new',
     iconCls: 'icon-add',
    },
   ],

@@ -34,6 +34,12 @@ class Medical < Ygg::PublicModel
   define_default_log_controller(self)
 
   has_meta_class
+
+  before_save do
+    if pilot_id_changed?
+      self.class.readables_set_dirty
+    end
+  end
 end
 
 end

@@ -60,6 +60,18 @@ Ext.define('Extgui.Ygg.Acao.Invoice.IndexPanel', {
     align: 'right',
     unit: '€',
    },
+   {
+    dataIndex: 'state',
+    width: 230,
+    filterable: true,
+    searchable: true,
+   },
+   {
+    dataIndex: 'payment_state',
+    width: 230,
+    filterable: true,
+    searchable: true,
+   },
   ],
 
   actions: [

@@ -7,13 +7,13 @@
  *
  */
 
-Ext.define('Extgui.Ygg.Acao.Medical.View', {
+Ext.define('Extgui.Ygg.Acao.MemberService.View', {
   extend: 'Extgui.object.View',
   requires: [
     'Extgui.Ygg.Acao.Plugin',
-    'Extgui.Ygg.Acao.Medical',
+    'Extgui.Ygg.Acao.MemberService',
   ],
-  alias: 'widget.acao_medical_view',
+  alias: 'widget.acao_member_service_view',
 
-  extguiObject: 'Extgui.Ygg.Acao.Medical',
+  extguiObject: 'Extgui.Ygg.Acao.MemberService',
 });

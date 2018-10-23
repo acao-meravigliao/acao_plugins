@@ -42,6 +42,12 @@ class License < Ygg::PublicModel
 
   has_meta_class
 
+  before_save do
+    if pilot_id_changed?
+      self.class.readables_set_dirty
+    end
+  end
+
   class Rating < Ygg::BasicModel
     self.table_name = 'acao_license_ratings'
     self.inheritance_column = false

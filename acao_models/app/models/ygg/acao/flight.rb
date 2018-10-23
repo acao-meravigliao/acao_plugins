@@ -39,6 +39,8 @@ class Flight < Ygg::PublicModel
     [ :must_have_column, {name: "landing_airfield_id", type: :integer, default: nil, limit: 4, null: true}],
     [ :must_have_column, {name: "takeoff_location_id", type: :integer, default: nil, limit: 4, null: true}],
     [ :must_have_column, {name: "landing_location_id", type: :integer, default: nil, limit: 4, null: true}],
+    [ :must_have_column, {name: "takeoff_location_raw", type: :string, default: nil, limit: 255, null: true}],
+    [ :must_have_column, {name: "landing_location_raw", type: :string, default: nil, limit: 255, null: true}],
     [ :must_have_column, {name: "aircraft_owner", type: :string, default: nil, null: true}],
     [ :must_have_column, {name: "aircraft_owner_id", type: :integer, default: nil, limit: 4, null: true}],
     [ :must_have_column, {name: "instruction_flight", type: :boolean, default: false, null: false}],
@@ -109,16 +111,11 @@ class Flight < Ygg::PublicModel
            class_name: 'Ygg::Acao::Flight',
            foreign_key: :towed_by_id
 
-
-#  interface :rest do
-#    capability :owner do
-##      allow :show
-#      default_readable!
-#      readable :bollini_volo
-#      readable :takeoff_at
-#      readable :landing_at
-#    end
-#  end
+  before_save do
+    if pilot1_id_changed? || pilot2_id_changed? || towed_by_id_changed?
+      self.class.readables_set_dirty
+    end
+  end
 
   def self.merge(l:, r:, l_cmp_r:, l_to_r:, r_to_l:, lr_update:)
     r_enum = r.each
@@ -147,12 +144,12 @@ class Flight < Ygg::PublicModel
 
   class InvalidRecord < StandardError ; end
 
-  def self.sync_from_maindb!(limit: 300)
+  def self.sync_from_maindb!(start: 0, limit: 300)
 
-     l_relation = Ygg::Acao::MainDb::Volo.order(id_voli: :asc)
+     l_relation = Ygg::Acao::MainDb::Volo.where('id_voli > ?', start).order(id_voli: :asc)
      l_relation = l_relation.limit(limit) if limit
 
-     r_relation = Ygg::Acao::Flight.where(source: 'OLDDB').where('source_id IS NOT NULL').order(source_id: :asc)
+     r_relation = Ygg::Acao::Flight.where(source: 'OLDDB').where('source_id IS NOT NULL').where('source_id > ?', start).order(source_id: :asc)
      r_relation = r_relation.where('source_id >= ?', l_relation.first.id_voli) if limit
 
 #    transaction do
@@ -162,48 +159,51 @@ class Flight < Ygg::PublicModel
       l_cmp_r: lambda { |l,r| l.id_voli <=> r.source_id },
       l_to_r: lambda { |l|
         transaction do
-        puts "ADDING FLIGHT ID=#{l.id_voli}"
+          puts "ADDING FLIGHT ID=#{l.id_voli}"
 
-        begin
-          if !l.marche_aliante.blank? &&
-              l.marche_aliante.strip != 'NO' &&
-              l.marche_aliante.strip != 'NOALI' &&
-              l.marche_aliante.strip != 'I-ALTRO' &&
-              l.marche_aliante.strip != 'ACAO' &&
-              l.marche_aliante.strip != 'DG1000' &&
-              l.marche_aliante.strip != 'I-ALTRI'
+          # Add towplane flight (first, so that we can look it up for towed_by later)
+          begin
+            if !l.marche_aereo.blank? &&
+               l.marche_aereo.strip != 'NO' &&
+               l.marche_aereo.strip != 'AUTO' &&
+               l.marche_aereo.strip != 'I-ALTRI'
 
-            gl_flight = Ygg::Acao::Flight.new(
-              source: 'OLDDB',
-              source_id: l.id_voli,
-              source_expansion: 'GL',
-            )
+              tow_flight = Ygg::Acao::Flight.new(
+                source: 'OLDDB',
+                source_id: l.id_voli,
+                source_expansion: 'TOW',
+              )
 
-            gl_flight.sync_from_maindb_as_gl(l)
-            gl_flight.save!
+              tow_flight.sync_from_maindb_as_tow(l)
+              tow_flight.save!
+            end
+          rescue InvalidRecord => e
+            puts "OOOOOOOOOOOOOOOOHHHHHHHHH In record #{l.id_voli} (GL): #{e.to_s}"
           end
-        rescue InvalidRecord => e
-          puts "OOOOOOOOOOOOOOOOHHHHHHHHH In record #{l.id_voli} (TOW): #{e.to_s}"
-        end
 
-        begin
-          if !l.marche_aereo.blank? &&
-             l.marche_aereo.strip != 'NO' &&
-             l.marche_aereo.strip != 'AUTO' &&
-             l.marche_aereo.strip != 'I-ALTRI'
+          # Adding glider flight
+          begin
+            if !l.marche_aliante.blank? &&
+                l.marche_aliante.strip != 'NO' &&
+                l.marche_aliante.strip != 'NOALI' &&
+                l.marche_aliante.strip != 'I-ALTRO' &&
+                l.marche_aliante.strip != 'ACAO' &&
+                l.marche_aliante.strip != 'DG1000' &&
+                l.marche_aliante.strip != 'I-ALTRI'
 
-            tow_flight = Ygg::Acao::Flight.new(
-              source: 'OLDDB',
-              source_id: l.id_voli,
-              source_expansion: 'TOW',
-            )
+              gl_flight = Ygg::Acao::Flight.new(
+                source: 'OLDDB',
+                source_id: l.id_voli,
+                source_expansion: 'GL',
+              )
 
-            tow_flight.sync_from_maindb_as_tow(l)
-            tow_flight.save!
+              gl_flight.sync_from_maindb_as_gl(l)
+              gl_flight.save!
+            end
+          rescue InvalidRecord => e
+            puts "OOOOOOOOOOOOOOOOHHHHHHHHH In record #{l.id_voli} (TOW): #{e.to_s}"
           end
-        rescue InvalidRecord => e
-          puts "OOOOOOOOOOOOOOOOHHHHHHHHH In record #{l.id_voli} (GL): #{e.to_s}"
-        end
+
         end
       },
       r_to_l: lambda { |r|
@@ -267,9 +267,15 @@ class Flight < Ygg::PublicModel
     end
 
     if !other.codice_secondo_pilota_aliante.blank? &&
-        other.codice_secondo_pilota_aliante != 0
+        other.codice_secondo_pilota_aliante != 0 &&
+        other.codice_secondo_pilota_aliante != 1 &&
+        other.codice_secondo_pilota_aliante != 9999 &&
+        other.codice_secondo_pilota_aliante != 8888
       self.pilot2 = Ygg::Acao::Pilot.find_by(acao_code: other.codice_secondo_pilota_aliante)
-      if !pilot2
+      if pilot2
+        self.pilot2_role = 'PAX'
+      else
+        self.pilot2_role = nil
         raise InvalidRecord, "Missing referenced pilot2 code=#{other.codice_secondo_pilota_aliante}"
       end
     end
@@ -303,48 +309,38 @@ class Flight < Ygg::PublicModel
       self.pilot2_role = nil
     when 4   # ALIANTE CLUB S.S.      : volo non scuola trainato su monoposto del ACAO
       self.instruction_flight = false
-      self.pilot1_role = nil
+      self.pilot1_role = 'PIC'
       self.pilot2_role = nil
     when 5   # ALIANTE CLUB D.S.      : volo non scuola trainato su biposto del ACAO
       self.instruction_flight = false
-      self.pilot1_role = nil
-      self.pilot2_role = nil
+      self.pilot1_role = 'PIC'
     when 6   # VOLO TMG CLUB          : volo non scuola su TMG del ACAO
       self.instruction_flight = false
-      self.pilot1_role = nil
-      self.pilot2_role = nil
+      self.pilot1_role = 'PIC'
     when 7   # ALIANTE PRIVATO S.S    : volo non scuola trainato su monoposto privato
       self.instruction_flight = false
-      self.pilot1_role = nil
-      self.pilot2_role = nil
+      self.pilot1_role = 'PIC'
     when 8   # ALIANTE PRIVATO D.S.   : volo non scuola trainato su biposto privato
       self.instruction_flight = false
-      self.pilot1_role = nil
-      self.pilot2_role = nil
+      self.pilot1_role = 'PIC'
     when 9   # TMG PRIVATO            : volo non scuola su TMG privato
       self.instruction_flight = false
-      self.pilot1_role = nil
-      self.pilot2_role = nil
+      self.pilot1_role = 'PIC'
     when 10  # ALIANTE DEC. AUT. PRIV.: volo non scuola non trainato su SLMG privato
       self.instruction_flight = false
-      self.pilot1_role = nil
-      self.pilot2_role = nil
+      self.pilot1_role = 'PIC'
     when 11  # LANCIO VERRICELLO      : forse per i voli eseguiti fuori sede ?
       self.instruction_flight = false
-      self.pilot1_role = nil
-      self.pilot2_role = nil
+      self.pilot1_role = 'PIC'
     when 12  # VOLO SEP CLUB          : volo non scuola di un monomotore (traino) del ACAO senza aliante
       self.instruction_flight = false
-      self.pilot1_role = nil
-      self.pilot2_role = nil
+      self.pilot1_role = 'PIC'
     when 13  # VOLO SEP PRIVATO       : volo non scuola di un monomotore privato senza aliante
       self.instruction_flight = false
-      self.pilot1_role = nil
-      self.pilot2_role = nil
+      self.pilot1_role = 'PIC'
     when 14  # VOLO PROMO             : volo propaganda (a pagamento)
       self.instruction_flight = false
-      self.pilot1_role = nil
-      self.pilot2_role = nil
+      self.pilot1_role = 'PIC'
     end
 
     self.acao_tipo_volo_club = other.tipo_volo_club
@@ -357,12 +353,13 @@ class Flight < Ygg::PublicModel
   end
 
   def sync_from_maindb_as_tow(other)
+    self.aircraft_reg = other.marche_aereo.strip.upcase
     self.aircraft = Ygg::Acao::Aircraft.find_or_create_by!(registration: other.marche_aereo.strip.upcase)
 
     self.takeoff_time = other.ora_decollo_aereo
     self.landing_time = other.ore_atterraggio_aereo
 
-    self.towing = self.class.find_by(source_id: other.id_voli, source_expansion: 'GL')
+#    self.towing = self.class.find_by(source_id: other.id_voli, source_expansion: 'GL')
 
     takeoff_airfield = Ygg::Acao::Airfield.find_by(icao_code: other.dep.strip.upcase)
     takeoff_airfield ||= Ygg::Acao::Airfield.find_by(symbol: other.dep.strip.upcase)

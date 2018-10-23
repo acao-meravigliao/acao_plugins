@@ -41,7 +41,8 @@ class Payment < Ygg::PublicModel
   ]
 
   belongs_to :invoice,
-             class_name: 'Ygg::Acao::Invoice'
+             class_name: 'Ygg::Acao::Invoice',
+             optional: true # TEMPORARY FIXME
 
   belongs_to :person,
              class_name: 'Ygg::Core::Person'
@@ -58,8 +59,6 @@ class Payment < Ygg::PublicModel
   include Ygg::Core::Loggable
   define_default_log_controller(self)
 
-  has_acl
-
   include Ygg::Core::Notifiable
 
   after_initialize do
@@ -75,14 +74,20 @@ class Payment < Ygg::PublicModel
     end
   end
 
+  before_save do
+    if person_id_changed?
+      self.class.readables_set_dirty
+    end
+  end
+
   def completed!(no_autoinvoice: false)
     raise "Payment in state #{state} cannot be confirmed" if state != 'PENDING'
 
     self.state = 'COMPLETED'
     self.completed_at = Time.now
+    save!
 
     invoice.one_payment_has_been_completed!(self) if invoice
-    save!
 
     Ygg::Ml::Msg.notify(destinations: person, template: 'PAYMENT_COMPLETED', template_context: {
       first_name: person.first_name,

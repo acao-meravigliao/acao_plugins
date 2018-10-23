@@ -29,6 +29,8 @@ class Invoice::RestController < Ygg::Hel::RestController
     attribute(:completed_at) { show! }
     attribute(:first_name) { show! }
     attribute(:last_name) { show! }
+    attribute(:state) { show! }
+    attribute(:payment_state) { show! }
     attribute(:total) { show! }
   end
 
@@ -52,6 +54,10 @@ class Invoice::RestController < Ygg::Hel::RestController
         show!
       end
     end
+  end
+
+  def authorization_prefilter
+    ar_model.where(person_id: aaa_context.auth_person.id)
   end
 
   build_member_roles(:blahblah) do |obj|

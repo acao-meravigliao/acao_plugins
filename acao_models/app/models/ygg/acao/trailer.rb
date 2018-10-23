@@ -41,6 +41,11 @@ class Trailer < Ygg::PublicModel
   include Ygg::Core::Loggable
   define_default_log_controller(self)
 
+  before_save do
+    if person_id_changed?
+      self.class.readables_set_dirty
+    end
+  end
 end
 
 end

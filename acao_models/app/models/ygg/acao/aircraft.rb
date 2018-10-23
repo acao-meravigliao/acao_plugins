@@ -20,6 +20,7 @@ class Aircraft < Ygg::PublicModel
     [ :must_have_column, { name: "uuid", type: :uuid, default: nil, default_function: "gen_random_uuid()", null: false}],
     [ :must_have_column, {name: "aircraft_type_id", type: :integer, default: nil, limit: 4, null: true}],
     [ :must_have_column, {name: "owner_id", type: :integer, default: nil, limit: 4, null: true}],
+    [ :must_have_column, {name: "club_id", type: :uuid, default: nil, null: true}],
     [ :must_have_column, {name: "race_registration", type: :string, default: nil, limit: 255, null: true}],
     [ :must_have_column, {name: "registration", type: :string, default: nil, limit: 255, null: true}],
     [ :must_have_column, {name: "fn_owner_name", type: :string, default: nil, limit: 255, null: true}],
@@ -34,8 +35,11 @@ class Aircraft < Ygg::PublicModel
     [ :must_have_index, {columns: ["flarm_identifier"], unique: true}],
     [ :must_have_index, {columns: ["icao_identifier"], unique: true}],
     [ :must_have_index, {columns: ["registration"], unique: false}],
+    [ :must_have_index, {columns: ["owner_id"], unique: false}],
+    [ :must_have_index, {columns: ["club_id"], unique: false}],
     [ :must_have_fk, {to_table: "acao_aircraft_types", column: "aircraft_type_id", primary_key: "id", on_delete: nil, on_update: nil}],
     [ :must_have_fk, {to_table: "core_people", column: "owner_id", primary_key: "id", on_delete: nil, on_update: nil}],
+    [ :must_have_fk, {to_table: "acao_clubs", column: "club_id", primary_key: "id", on_delete: nil, on_update: nil}],
   ]
 
   has_many :trackers,
@@ -43,6 +47,10 @@ class Aircraft < Ygg::PublicModel
 
   belongs_to :aircraft_type,
              class_name: 'Ygg::Acao::AircraftType',
+             optional: true
+
+  belongs_to :club,
+             class_name: 'Ygg::Acao::Club',
              optional: true
 
   belongs_to :owner,
@@ -54,6 +62,12 @@ class Aircraft < Ygg::PublicModel
 
   include Ygg::Core::Loggable
   define_default_log_controller(self)
+
+  before_save do
+    if owner_id_changed?
+      self.class.readables_set_dirty
+    end
+  end
 
   def self.import_flarmnet_db!
     flarmnet_db = Hash[open('http://www.flarmnet.org/files/data.fln', 'r').read.lines[1..-1].map { |x|

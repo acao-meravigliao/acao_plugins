@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018, Daniele Orlandi
+ * Copyright (C) 2014-2017, Daniele Orlandi
  *
  * Author:: Daniele Orlandi <daniele@orlandi.com>
  *
@@ -7,13 +7,13 @@
  *
  */
 
-Ext.define('Extgui.Ygg.Acao.Trailer.View', {
+Ext.define('Extgui.Ygg.Acao.Club.View', {
   extend: 'Extgui.object.View',
   requires: [
     'Extgui.Ygg.Acao.Plugin',
-    'Extgui.Ygg.Acao.Trailer',
+    'Extgui.Ygg.Acao.Club',
   ],
-  alias: 'widget.acao_trailer_view',
+  alias: 'widget.acao_club_view',
 
-  extguiObject: 'Extgui.Ygg.Acao.Trailer',
+  extguiObject: 'Extgui.Ygg.Acao.Club',
 });

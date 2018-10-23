@@ -38,6 +38,12 @@ Ext.define('Extgui.Ygg.Acao.Aircraft.IndexPanel', {
    },
    {
     xtype: 'stringtemplatecolumn',
+    dataIndex: 'club.name',
+    tpl: '<tpl if="club">{club.name}<tpl else>{fn_home_airport}</tpl>',
+    width: 250,
+   },
+   {
+    xtype: 'stringtemplatecolumn',
     dataIndex: 'owner.name',
     tpl: '<tpl if="owner">{owner.fist_name} {owner.last_name}<tpl else>{fn_owner_name}</tpl>',
     width: 150,
@@ -51,14 +57,12 @@ Ext.define('Extgui.Ygg.Acao.Aircraft.IndexPanel', {
     width: 150,
    },
    {
-    xtype: 'stringtemplatecolumn',
     dataIndex: 'flarm_identifier',
     filterable: true,
     searchable: true,
     width: 150,
    },
    {
-    xtype: 'stringtemplatecolumn',
     dataIndex: 'icao_identifier',
     filterable: true,
     searchable: true,

@@ -28,7 +28,7 @@ class BarTransaction < Ygg::PublicModel
     [ :must_have_index, {columns: ["uuid"], unique: true}],
     [ :must_have_index, {columns: ["recorded_at"], unique: false}],
     [ :must_have_fk, {to_table: "core_people", column: "person_id", primary_key: "id", on_delete: nil, on_update: nil}],
-    [ :must_have_fk, {to_table: "core_http_sessions", column: "session_id", primary_key: "id", on_delete: nil, on_update: nil}],
+    [ :must_have_fk, {to_table: "core_sessions", column: "session_id", primary_key: "id", on_delete: nil, on_update: nil}],
   ]
 
   belongs_to :person,
@@ -37,8 +37,6 @@ class BarTransaction < Ygg::PublicModel
   include Ygg::Core::Loggable
   define_default_log_controller(self)
 
-#  has_acl
-#
 #  include Ygg::Core::Notifiable
 #
 #  def set_default_acl
@@ -47,6 +45,12 @@ class BarTransaction < Ygg::PublicModel
 #      acl_entries << AclEntry.new(owner: self, person: person, capability: 'owner')
 #    end
 #  end
+
+  before_save do
+    if person_id_changed?
+      self.class.readables_set_dirty
+    end
+  end
 end
 
 end

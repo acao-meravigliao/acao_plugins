@@ -45,6 +45,12 @@ class RosterEntry < Ygg::PublicModel
     end
   end
 
+  before_save do
+    if person_id_changed?
+      self.class.readables_set_dirty
+    end
+  end
+
   def offer!
     self.on_offer_since = Time.now
     save!

@@ -9,7 +9,7 @@
 module Ygg
 module Acao
 
-class Member::Service < Ygg::PublicModel
+class MemberService < Ygg::PublicModel
   self.table_name = 'acao_member_services'
 
   self.porn_migration += [

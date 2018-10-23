@@ -13,6 +13,7 @@ Ext.define('Extgui.Ygg.Acao.Aircraft.ObjectPanel', {
     'Extgui.Ygg.Acao.Plugin',
     'Extgui.Ygg.Acao.Aircraft',
     'Extgui.Ygg.Acao.AircraftType.ReferenceField',
+    'Extgui.Ygg.Acao.Club.ReferenceField',
     'Extgui.Ygg.Core.Person.ReferenceField',
   ],
 
@@ -48,6 +49,10 @@ Ext.define('Extgui.Ygg.Acao.Aircraft.ObjectPanel', {
      {
       xtype: 'core_person',
       name: 'owner_id',
+     },
+     {
+      xtype: 'acao_club',
+      name: 'club_id',
      },
      {
       xtype: 'textfield',

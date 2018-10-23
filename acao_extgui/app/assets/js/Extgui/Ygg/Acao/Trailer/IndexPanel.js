@@ -19,7 +19,7 @@ Ext.define('Extgui.Ygg.Acao.Trailer.IndexPanel', {
 
   storeConfig: {
     sorters: {
-      property: 'valid_to',
+      property: 'identifier',
       direction: 'DESC',
     },
   },

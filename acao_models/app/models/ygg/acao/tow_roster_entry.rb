@@ -39,6 +39,13 @@ class TowRosterEntry < Ygg::PublicModel
       self.selected_at = Time.now
     end
   end
+
+  before_save do
+    if person_id_changed?
+      self.class.readables_set_dirty
+    end
+  end
+
 end
 
 end

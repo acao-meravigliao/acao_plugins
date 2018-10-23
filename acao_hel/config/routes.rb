@@ -101,6 +101,9 @@ Rails.application.routes.draw do
       hel_resources :member_services, controller: 'member_service/rest' do
       end
 
+      hel_resources :clubs, controller: 'club/rest' do
+      end
+
       post 'password_recovery' => 'password_recovery#recover'
     end
   end

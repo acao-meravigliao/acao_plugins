@@ -41,12 +41,22 @@ Ext.define('Extgui.Ygg.Acao.Medical.ObjectPanel', {
       ],
      },
      {
-      xtype: 'datetimefield',
-      name: 'issued_at',
+      xtype: 'fieldcontainer',
+      fieldLabel: i18n('ygg.acao.medical.issued_at'),
+      items:
+        {
+         xtype: 'datetimefield',
+         name: 'issued_at',
+        },
      },
      {
-      xtype: 'datetimefield',
-      name: 'valid_to',
+      xtype: 'fieldcontainer',
+      fieldLabel: i18n('ygg.acao.medical.valid_to'),
+      items:
+        {
+         xtype: 'datetimefield',
+         name: 'valid_to',
+        },
      },
     ],
    },

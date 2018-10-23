@@ -25,22 +25,22 @@ class ExtguiEngine < Rails::Engine
         text: 'ACAO',
 #        icon: image_path('ml/ml-16x16.png'),
       },
-      members: {
-        _node_: {
-          text: 'Soci',
-          uri: 'model/ygg/acao/members/',
-        }
-      },
+#      members: {
+#        _node_: {
+#          text: 'Soci',
+#          uri: 'model/ygg/acao/members/',
+#        }
+#      },
       memberships: {
         _node_: {
           text: 'Associazioni',
           uri: 'model/ygg/acao/memberships/',
         }
       },
-      person_services: {
+      member_services: {
         _node_: {
           text: 'Servizi',
-          uri: 'model/ygg/acao/person_services/',
+          uri: 'model/ygg/acao/member_services/',
         }
       },
       licenses: {
@@ -81,25 +81,19 @@ class ExtguiEngine < Rails::Engine
       },
       flights: {
         _node_: {
-          text: 'Flights',
+          text: 'Voli',
           uri: 'model/ygg/acao/flights/',
         }
       },
       timetable: {
         _node_: {
-          text: 'Timetable',
+          text: 'Tabella Giornaliera',
           uri: 'model/ygg/acao/timetable_entries/',
-        }
-      },
-      pilots: {
-        _node_: {
-          text: 'Pilots',
-          uri: 'model/ygg/acao/pilots/',
         }
       },
       aircrafts: {
         _node_: {
-          text: 'Aircrafts',
+          text: 'Aeromobili',
           uri: 'model/ygg/acao/aircrafts/',
         }
       },
@@ -117,6 +111,12 @@ class ExtguiEngine < Rails::Engine
           _node_: {
             text: 'Airfields',
             uri: 'model/ygg/acao/airfields/',
+          }
+        },
+        clubs: {
+          _node_: {
+            text: 'Club',
+            uri: 'model/ygg/acao/clubs/',
           }
         },
         service_types: {

@@ -17,7 +17,10 @@ Ext.define('Extgui.Ygg.Acao.Flight.ObjectPanel', {
     'Extgui.Ygg.Acao.Aircraft',
     'Ygg.Core.Person',
     'Extgui.Ygg.Core.Person.ReferenceField',
+    'Extgui.Ygg.Core.Location.ReferenceField',
     'Extgui.Ygg.Acao.Aircraft.ReferenceField',
+    'Extgui.Ygg.Acao.Airfield.ReferenceField',
+    'Extgui.Ygg.Acao.Flight.ReferenceField',
   ],
 
   extguiObject: 'Extgui.Ygg.Acao.Flight',
@@ -50,23 +53,86 @@ Ext.define('Extgui.Ygg.Acao.Flight.ObjectPanel', {
       xtype: 'acao_aircraft',
       name: 'aircraft_id',
      },
-
      {
-      xtype: 'datetimefield',
-      name: 'takeoff_time',
-     },
-     {
-      xtype: 'datetimefield',
-      name: 'landing_time',
+      xtype: 'textfield',
+      name: 'aircraft_reg',
      },
 
      {
-      xtype: 'textfield',
-      name: 'takeoff_location',
+      xtype: 'container',
+      layout: 'hbox',
+      items: [
+       {
+        xtype: 'fieldset',
+        flex: 1,
+        layout: 'anchor',
+        margin: 5,
+        padding: 5,
+        title: i18n('ygg.acao.flight.takeoff'),
+        items: [
+         {
+          xtype: 'fieldcontainer',
+          fieldLabel: i18n('ygg.acao.flight.takeoff_time'),
+          items:
+            {
+             xtype: 'datetimefield',
+             name: 'takeoff_time',
+            },
+         },
+         {
+          xtype: 'acao_airfield',
+          name: 'takeoff_airfield_id',
+         },
+         {
+          xtype: 'core_location',
+          name: 'takeoff_location',
+         },
+         {
+          xtype: 'textfield',
+          name: 'takeoff_location_raw',
+          anchor: '100%',
+         },
+        ],
+       },
+
+       {
+        xtype: 'fieldset',
+        flex: 1,
+        layout: 'anchor',
+        margin: 5,
+        padding: 5,
+        title: i18n('ygg.acao.flight.landing'),
+        items: [
+         {
+          xtype: 'fieldcontainer',
+          fieldLabel: i18n('ygg.acao.flight.landing_time'),
+          items:
+            {
+             xtype: 'datetimefield',
+             name: 'landing_time',
+            },
+         },
+         {
+          xtype: 'acao_airfield',
+          name: 'landing_airfield_id',
+         },
+         {
+          xtype: 'core_location',
+          name: 'landing_location',
+         },
+         {
+          xtype: 'textfield',
+          name: 'landing_location_raw',
+          anchor: '100%',
+         },
+        ],
+       },
+      ],
      },
+
      {
-      xtype: 'textfield',
-      name: 'landing_location',
+      xtype: 'acao_flight',
+      name: 'towed_by_id',
      },
     ],
    },

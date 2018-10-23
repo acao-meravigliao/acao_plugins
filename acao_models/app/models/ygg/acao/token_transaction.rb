@@ -27,11 +27,18 @@ class TokenTransaction < Ygg::PublicModel
     [ :must_have_index, {columns: ["person_id"], unique: false}],
     [ :must_have_index, {columns: ["session_id"], unique: false}],
     [ :must_have_fk, {to_table: "core_people", column: "person_id", primary_key: "id", on_delete: nil, on_update: nil}],
-    [ :must_have_fk, {to_table: "core_http_sessions", column: "session_id", primary_key: "id", on_delete: nil, on_update: nil}],
+    [ :must_have_fk, {to_table: "core_sessions", column: "session_id", primary_key: "id", on_delete: nil, on_update: nil}],
   ]
 
   belongs_to :person,
              class_name: '::Ygg::Core::Person'
+
+  before_save do
+    if person_id_changed?
+      self.class.readables_set_dirty
+    end
+  end
+
 end
 
 end

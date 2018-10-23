@@ -1,0 +1,74 @@
+/*
+ * Copyright (C) 2017-2017, Daniele Orlandi
+ *
+ * Author:: Daniele Orlandi <daniele@orlandi.com>
+ *
+ * License:: You can redistribute it and/or modify it under the terms of the LICENSE file.
+ *
+ */
+
+Ext.define('Extgui.Ygg.Acao.MemberService.ObjectPanel', {
+  extend: 'Extgui.object.panel.Base',
+  requires: [
+    'Extgui.Ygg.Acao.Plugin',
+    'Extgui.form.field.DateTime',
+    'Extgui.Ygg.Acao.MemberService',
+    'Extgui.Ygg.Acao.ServiceType.ReferenceField',
+    'Extgui.Ygg.Acao.Payment.ReferenceField',
+    'Extgui.Ygg.Core.Person.ReferenceField',
+    'Extgui.form.field.JsonAsText',
+  ],
+
+  extguiObject: 'Extgui.Ygg.Acao.MemberService',
+
+  tabs: [
+   {
+    xtype: 'panel',
+    title: i18n('extgui.ygg.acao.member.service.object_panel.object_tab'),
+    padding: 10,
+    layout: 'anchor',
+    items: [
+     {
+      xtype: 'core_person',
+      name: 'person_id',
+     },
+     {
+      xtype: 'acao_service_type',
+      name: 'service_type_id',
+     },
+     {
+      xtype: 'acao_payment',
+      name: 'payment_id',
+     },
+     {
+      xtype: 'fieldcontainer',
+      fieldLabel: i18n('ygg.acao.member_service.valid_from'),
+      items:
+        {
+         xtype: 'datetimefield',
+         name: 'valid_from',
+        },
+     },
+     {
+      xtype: 'fieldcontainer',
+      fieldLabel: i18n('ygg.acao.member_service.valid_to'),
+      items:
+        {
+         xtype: 'datetimefield',
+         name: 'valid_to',
+        },
+     },
+     {
+      xtype: 'jsonastext',
+      name: 'service_data',
+      height: 200,
+     },
+    ],
+   },
+  ],
+
+  nav: [
+  ],
+
+  reports: [],
+});

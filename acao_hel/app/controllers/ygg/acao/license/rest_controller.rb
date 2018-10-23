@@ -55,6 +55,10 @@ class License::RestController < Ygg::Hel::RestController
     end
   end
 
+  def authorization_prefilter
+    ar_model.where(pilot_id: aaa_context.auth_person.id)
+  end
+
   build_member_roles(:blahblah) do |obj|
     obj.pilot_id == aaa_context.auth_person.id ? [ :owner ] : []
   end

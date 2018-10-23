@@ -37,7 +37,7 @@ class Pilot < Ygg::Core::Person
 
 
   has_many :acao_services,
-           class_name: '::Ygg::Acao::Member::Service',
+           class_name: '::Ygg::Acao::MemberService',
            foreign_key: 'person_id'
 
   has_many :acao_trailers,
@@ -61,6 +61,14 @@ class Pilot < Ygg::Core::Person
   has_many :acao_aircrafts,
            class_name: '::Ygg::Acao::Aircraft',
            foreign_key: 'owner_id'
+
+  has_many :acao_flights,
+           class_name: '::Ygg::Acao::Flight',
+           foreign_key: 'pilot1_id'
+
+  has_many :acao_flights_as_pilot2,
+           class_name: '::Ygg::Acao::Flight',
+           foreign_key: 'pilot2_id'
 
   # Old DB
   belongs_to :acao_socio,

@@ -9,8 +9,8 @@
 module Ygg
 module Acao
 
-class Member::Service::RestController < Ygg::Hel::RestController
-  ar_controller_for Ygg::Acao::Member::Service
+class MemberService::RestController < Ygg::Hel::RestController
+  ar_controller_for Ygg::Acao::MemberService
 
   load_role_defs!
 
@@ -27,6 +27,18 @@ class Member::Service::RestController < Ygg::Hel::RestController
       attribute(:first_name) { show! }
       attribute(:last_name) { show! }
     end
+
+    attribute(:service_type) do
+      show!
+      empty!
+      attribute(:name) { show! }
+    end
+
+    attribute(:payment) do
+      show!
+      empty!
+      attribute(:identifier) { show! }
+    end
   end
 
   view :edit do
@@ -37,6 +49,14 @@ class Member::Service::RestController < Ygg::Hel::RestController
       attribute(:last_name) { show! }
       attribute(:handle) { show! }
       attribute(:italian_fiscal_code) { show! }
+    end
+
+    attribute(:service_type) do
+      show!
+    end
+
+    attribute(:payment) do
+      show!
     end
   end
 

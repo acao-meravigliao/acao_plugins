@@ -52,9 +52,13 @@ class Membership < Ygg::PublicModel
   include Ygg::Core::Loggable
   define_default_log_controller(self)
 
-  has_acl
-
   include Ygg::Core::Notifiable
+
+  before_save do
+    if person_id_changed?
+      self.class.readables_set_dirty
+    end
+  end
 
   def self.compute_completed_years(from, to)
     # Number of completed years is not trivial :)
@@ -167,7 +171,7 @@ class Membership < Ygg::PublicModel
       )
       invoice.details << cav_invoice_detail
 
-      cav_member_service = Ygg::Acao::Member::Service.create(
+      cav_member_service = Ygg::Acao::MemberService.create(
         person: person,
         service_type: cav_service_type,
         invoice_detail: cav_invoice_detail,
@@ -189,7 +193,7 @@ class Membership < Ygg::PublicModel
       )
       invoice.details << invoice_detail
 
-      Ygg::Acao::Member::Service.create(
+      Ygg::Acao::MemberService.create!(
         person: person,
         service_type: service_type,
         invoice_detail: invoice_detail,
@@ -200,13 +204,6 @@ class Membership < Ygg::PublicModel
     end
 
     # Done! -------------
-
-    # FIXME: implement better cacheing
-    Ygg::Acao::Invoice.readables_clear_cache(person_id: person.id)
-    Ygg::Acao::Invoice::Detail.readables_clear_cache(person_id: person.id)
-    Ygg::Acao::Payment.readables_clear_cache(person_id: person.id)
-    Ygg::Acao::Membership.readables_clear_cache(person_id: person.id)
-    Ygg::Acao::Member::Service.readables_clear_cache(person_id: person.id)
 
     invoice.close!
     payment = invoice.generate_payment!(
@@ -225,12 +222,12 @@ class Membership < Ygg::PublicModel
   end
 
   def payment_completed!
-    self.status = 'COMPLETED'
+    self.status = 'ACTIVE'
     save!
 
     Ygg::Ml::Msg.notify(destinations: person, template: 'MEMBERSHIP_COMPLETE', template_context: {
       first_name: person.first_name,
-      year: year,
+      year: reference_year.year,
     }, objects: self)
   end
 

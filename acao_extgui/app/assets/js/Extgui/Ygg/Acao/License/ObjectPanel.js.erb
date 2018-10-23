@@ -14,6 +14,7 @@ Ext.define('Extgui.Ygg.Acao.License.ObjectPanel', {
     'Extgui.form.field.DateTime',
     'Extgui.Ygg.Acao.License',
     'Extgui.Ygg.Acao.License.Rating.CollectionField',
+    'Extgui.Ygg.Core.Person.ReferenceField',
   ],
 
   extguiObject: 'Extgui.Ygg.Acao.License',
@@ -30,6 +31,10 @@ Ext.define('Extgui.Ygg.Acao.License.ObjectPanel', {
       name: 'identifier',
      },
      {
+      xtype: 'core_person',
+      name: 'pilot_id',
+     },
+     {
       xtype: 'combobox',
       name: 'type',
       width: 370,
@@ -43,16 +48,31 @@ Ext.define('Extgui.Ygg.Acao.License.ObjectPanel', {
       ],
      },
      {
-      xtype: 'datetimefield',
-      name: 'issued_at',
+      xtype: 'fieldcontainer',
+      fieldLabel: i18n('ygg.acao.license.issued_at'),
+      items:
+        {
+         xtype: 'datetimefield',
+         name: 'issued_at',
+        },
      },
      {
-      xtype: 'datetimefield',
-      name: 'valid_to',
+      xtype: 'fieldcontainer',
+      fieldLabel: i18n('ygg.acao.license.valid_to'),
+      items:
+        {
+         xtype: 'datetimefield',
+         name: 'valid_to',
+        },
      },
      {
-      xtype: 'datetimefield',
-      name: 'valid_to2',
+      xtype: 'fieldcontainer',
+      fieldLabel: i18n('ygg.acao.license.valid_to2'),
+      items:
+        {
+         xtype: 'datetimefield',
+         name: 'valid_to2',
+        },
      },
      {
       xtype: 'acao_license_ratings',

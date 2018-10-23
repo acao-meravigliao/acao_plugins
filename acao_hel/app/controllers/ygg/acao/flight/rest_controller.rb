@@ -54,6 +54,22 @@ class Flight::RestController < Ygg::Hel::RestController
     attribute(:pilot2) do
       show!
     end
+
+    attribute(:takeoff_location) do
+      show!
+    end
+    attribute(:landing_location) do
+      show!
+    end
+
+    attribute(:towed_by) do
+      show!
+    end
+  end
+
+  def authorization_prefilter
+    ar_model.where(pilot1_id: aaa_context.auth_person.id).
+      or(ar_model.where(pilot2_id: aaa_context.auth_person.id))
   end
 
   build_member_roles(:blahblah) do |obj|

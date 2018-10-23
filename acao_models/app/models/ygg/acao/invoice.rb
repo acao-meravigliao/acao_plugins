@@ -21,6 +21,7 @@ class Invoice < Ygg::PublicModel
     [ :must_have_column, {name: "address", type: :string, default: nil, limit: 255, null: true}],
     [ :must_have_column, {name: "created_at", type: :datetime, default: nil, null: true}],
     [ :must_have_column, {name: "state", type: :string, default: 'NEW', null: false}],
+    [ :must_have_column, {name: "payment_state", type: :string, default: 'UNPAID', null: false}],
     [ :must_have_column, {name: "notes", type: :text, default: nil, null: true}],
     [ :must_have_column, {name: "payment_method", type: :string, default: nil, limit: 32, null: false}],
     [ :must_have_column, {name: "last_chore", type: :datetime, default: nil, null: true}],
@@ -31,31 +32,6 @@ class Invoice < Ygg::PublicModel
   ]
 
   has_meta_class
-
-  # TO BE REMOVED WHEN ALL IDs are UUIDs
-  has_many :readables,
-           class_name: 'Ygg::Core::ReadableUuid',
-           as: :obj
-
-  def self.readables_relation(aaa_context)
-    transaction do
-      rdbl = Ygg::Core::Readable.where(obj_type: self.name, person: aaa_context.auth_person)
-      if !rdbl.first || rdbl.first.created_at < (Time.now - 1.hour)
-
-        rdbl.destroy_all
-
-        all.each do |x|
-          if x.ar_guess_controller.new(aaa_context: aaa_context).ar_member_action_allowed?(x, [ :show, :index ])
-            Ygg::Core::Readable.create!(obj: x, person: aaa_context.auth_person)
-          end
-        end
-      end
-    end
-
-    joins(:readables).where(core_readables_uuid: { person_id: aaa_context.auth_person.id })
-  end
-  ########################################### ^^^^^^^^^
-
 
   belongs_to :person,
              class_name: 'Ygg::Core::Person'
@@ -74,6 +50,16 @@ class Invoice < Ygg::PublicModel
 
   include Ygg::Core::Notifiable
 
+  # TO BE REMOVED WHEN ALL IDs are UUIDs
+  has_many :readables,
+           class_name: 'Ygg::Core::ReadableUuid',
+           as: :obj
+
+  def self.readables_relation(person_id:)
+    joins(:readables).where(core_readables_uuid: { person_id: person_id })
+  end
+  ########################################### ^^^^^^^^^
+
   after_initialize do
     if new_record?
       if person
@@ -82,14 +68,20 @@ class Invoice < Ygg::PublicModel
         self.address = person.residence_location && person.residence_location.full_address
       end
 
-#      code = nil
-#
-#      loop do
-#        code = "A-" + Password.random(4, symbols: 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789')
-#        break if !self.class.find_by_code(code)
-#      end
-#
-#      self.code = code
+      identifier = nil
+
+      loop do
+        identifier = "I-" + Password.random(4, symbols: 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789')
+        break if !self.class.find_by_identifier(identifier)
+      end
+
+      self.identifier = identifier
+    end
+  end
+
+  before_save do
+    if person_id_changed?
+      self.class.readables_set_dirty
     end
   end
 
@@ -106,13 +98,13 @@ class Invoice < Ygg::PublicModel
     if payments.all? { |x| x.state == 'COMPLETED' }
       paid_in_full!
     else
-      self.state = 'PARTIALLY_PAID'
+      self.payment_state = 'PARTIALLY_PAID'
       save!
     end
   end
 
   def paid_in_full!
-    self.state = 'PAID_IN_FULL'
+    self.payment_state = 'PAID_IN_FULL'
     save!
 
     details.all.each do |detail|
@@ -175,11 +167,11 @@ class Invoice < Ygg::PublicModel
           testa.cod_divisa = 'EUR'
           testa.cod_pagamento = cod_pagamento
           testa.contrassegno = 0
-          testa.nostro_rif = code
+          testa.nostro_rif = identifier
           testa.tot_documento = 0
           testa.tot_imponibile = 0
           testa.tot_imposta = 0
-          testa.vostro_rif = code
+          testa.vostro_rif = identifier
           testa.dati_controparte = XMLInterface::RicFisc::Docu::Testa::DatiControparte.new
           testa.dati_controparte.citta = person.residence_location.city
           testa.dati_controparte.codice_fiscale = person.italian_fiscal_code || person.vat_number
@@ -190,10 +182,10 @@ class Invoice < Ygg::PublicModel
         end
 
         docu.righe = XMLInterface::RicFisc::Docu::Righe.new do |righe|
-          payment_services.each do |svc|
-            if onda_1_code
+          details.each do |det|
+            if det.service_type.onda_1_code
               righe.righe << XMLInterface::RicFisc::Docu::Righe::Riga.new do |riga|
-                riga.cod_art = onda_1_code
+                riga.cod_art = det.service_type.onda_1_code
                 riga.cod_iva = ''
                 riga.cod_un_mis = 'NR.'
                 riga.descrizione = ''
@@ -204,23 +196,23 @@ class Invoice < Ygg::PublicModel
                 riga.perc_sconto2 = 0
                 riga.perc_sconto3 = 0
                 riga.perc_sconto4 = 0
-                riga.qta = onda_1_cnt
-                riga.tipo_riga = onda_1_type
+                riga.qta = det.service_type.onda_1_cnt
+                riga.tipo_riga = det.service_type.onda_1_type
                 riga.totale = ''
                 riga.valore_unitario = ''
 
                 riga.dati_art_serv = XMLInterface::RicFisc::Docu::Righe::Riga::DatiArtServ.new do |dati_art_serv|
-                  dati_art_serv.cod_art = onda_1_code
+                  dati_art_serv.cod_art = det.service_type.onda_1_code
                   dati_art_serv.cod_un_mis_base = 'NR.'
                   dati_art_serv.descrizione = ''
-                  dati_art_serv.tipo_articolo = onda_1_type
+                  dati_art_serv.tipo_articolo = det.service_type.onda_1_type
                 end
               end
             end
 
-            if onda_2_code
+            if det.service_type.onda_2_code
               righe.righe << XMLInterface::RicFisc::Docu::Righe::Riga.new do |riga|
-                riga.cod_art = onda_2_code
+                riga.cod_art = det.service_type.onda_2_code
                 riga.cod_iva = ''
                 riga.cod_un_mis = 'NR.'
                 riga.descrizione = ''
@@ -231,16 +223,16 @@ class Invoice < Ygg::PublicModel
                 riga.perc_sconto2 = 0
                 riga.perc_sconto3 = 0
                 riga.perc_sconto4 = 0
-                riga.qta = onda_2_cnt
-                riga.tipo_riga = onda_2_type
+                riga.qta = det.service_type.onda_2_cnt
+                riga.tipo_riga = det.service_type.onda_2_type
                 riga.totale = ''
                 riga.valore_unitario = ''
 
                 riga.dati_art_serv = XMLInterface::RicFisc::Docu::Righe::Riga::DatiArtServ.new do |dati_art_serv|
-                  dati_art_serv.cod_art = onda_2_code
+                  dati_art_serv.cod_art = det.service_type.onda_2_code
                   dati_art_serv.cod_un_mis_base = 'NR.'
                   dati_art_serv.descrizione = ''
-                  dati_art_serv.tipo_articolo = onda_2_type
+                  dati_art_serv.tipo_articolo = det.service_type.onda_2_type
                 end
               end
             end
@@ -250,7 +242,7 @@ class Invoice < Ygg::PublicModel
             riga.cod_art = ''
             riga.cod_iva = ''
             riga.cod_un_mis = ''
-            riga.descrizione = "Acquisto online, codice pagamento #{code}"
+            riga.descrizione = "Acquisto online, codice interno ricevuta #{identifier}"
             riga.imponibile = ''
             riga.importo_sconto = 0
             riga.imposta = ''
@@ -332,16 +324,21 @@ class Invoice < Ygg::PublicModel
   end
 
   def export_to_onda!(force: false)
-    raise "Cannot export in onda_export_status #{onda_export_status}" if onda_export_status != 'PENDING' && !force
+    raise "Cannot export in onda_export_status #{onda_export_status}" if onda_export_status != nil && !force
 
-    filename = File.join(Rails.application.config.acao.onda_import_dir, "#{Time.now.strftime('%Y%m%d_%H%M%S')}_#{code}.xml")
+    filename = File.join(Rails.application.config.acao.onda_import_dir, "#{Time.now.strftime('%Y%m%d_%H%M%S')}_#{id}.xml")
     filename_new = filename + '.new'
 
-    File.open(filename_new , 'w') do |file|
-      file.write(build_xml_for_onda)
-    end
+    begin
+      File.open(filename_new , 'w') do |file|
+        file.write(build_xml_for_onda)
+      end
 
-    File.rename(filename_new, filename)
+      File.rename(filename_new, filename)
+    rescue Exception
+      File.unlink(filename_new) rescue nil
+      raise
+    end
 
     self.onda_export_status = 'EXPORTED'
     save!
@@ -378,7 +375,7 @@ class Invoice < Ygg::PublicModel
             foreign_key: 'invoice_detail_id'
 
     has_one :member_service,
-            class_name: '::Ygg::Acao::Member::Service',
+            class_name: '::Ygg::Acao::MemberService',
             foreign_key: 'invoice_detail_id'
 
     has_meta_class
