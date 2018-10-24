@@ -222,7 +222,7 @@ class Membership < Ygg::PublicModel
   end
 
   def payment_completed!
-    self.status = 'ACTIVE'
+    self.status = 'MEMBER'
     save!
 
     Ygg::Ml::Msg.notify(destinations: person, template: 'MEMBERSHIP_COMPLETE', template_context: {
